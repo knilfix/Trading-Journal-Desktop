@@ -311,9 +311,49 @@ class TradeCalendarState extends State<TradeCalendar> {
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Month P&L: ',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Builder(
+                  builder: (_) {
+                    final monthPnL = _getMonthPnL(weeks);
+                    return Text(
+                      monthPnL == 0
+                          ? '-'
+                          : '${monthPnL > 0 ? '+' : ''}${monthPnL.toStringAsFixed(0)}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: monthPnL > 0
+                            ? Colors.green.shade700
+                            : monthPnL < 0
+                            ? Colors.red.shade700
+                            : Colors.grey.shade600,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  double _getMonthPnL(List<List<DateTime>> weeks) {
+    double sum = 0.0;
+    for (final week in weeks) {
+      sum += _getWeeklyPnL(week[0]);
+    }
+    return sum;
   }
 
   Widget _buildCalendarDay(DateTime day, ThemeData theme) {
@@ -332,7 +372,9 @@ class TradeCalendarState extends State<TradeCalendar> {
       } else if (dailyPnL < 0) {
         dayColor = Colors.red.withOpacity(0.15);
       } else {
-        dayColor = Colors.grey.withOpacity(0.1);
+        dayColor = Colors.grey.withOpacity(
+          0.18,
+        ); // Slightly more visible for break-even
       }
     }
 
@@ -342,6 +384,19 @@ class TradeCalendarState extends State<TradeCalendar> {
       borderColor = theme.colorScheme.primary;
     } else if (isToday) {
       borderColor = theme.colorScheme.secondary;
+    }
+
+    // Trade count color (blue with alpha)
+    final tradeCountColor = Colors.blue.withOpacity(0.55);
+
+    // PnL color
+    Color pnlColor;
+    if (dailyPnL > 0) {
+      pnlColor = Colors.green.shade700;
+    } else if (dailyPnL < 0) {
+      pnlColor = Colors.red.shade700;
+    } else {
+      pnlColor = Colors.grey.shade600;
     }
 
     return GestureDetector(
@@ -380,20 +435,18 @@ class TradeCalendarState extends State<TradeCalendar> {
               Text(
                 '${trades.length}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: tradeCountColor,
                 ),
               ),
               Text(
-                dailyPnL >= 0
+                dailyPnL > 0
                     ? '+${dailyPnL.toStringAsFixed(0)}'
                     : dailyPnL.toStringAsFixed(0),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 10,
-                  color: dailyPnL >= 0
-                      ? Colors.green.shade700
-                      : Colors.red.shade700,
+                  color: pnlColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
