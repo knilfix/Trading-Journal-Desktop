@@ -16,28 +16,22 @@ class UserProfileButton extends StatefulWidget {
   });
 
   @override
-  State<UserProfileButton> createState() =>
-      _UserProfileButtonState();
+  State<UserProfileButton> createState() => _UserProfileButtonState();
 }
 
-class _UserProfileButtonState
-    extends State<UserProfileButton> {
+class _UserProfileButtonState extends State<UserProfileButton> {
   late final UserService _userService;
 
   @override
   void initState() {
     super.initState();
     _userService = UserService.instance;
-    _userService.addListener(
-      _onUserChanged,
-    ); // Add listener
+    _userService.addListener(_onUserChanged); // Add listener
   }
 
   @override
   void dispose() {
-    _userService.removeListener(
-      _onUserChanged,
-    ); // Remove listener
+    _userService.removeListener(_onUserChanged); // Remove listener
     super.dispose();
   }
 
@@ -62,20 +56,12 @@ class _UserProfileButtonState
               barrierDismissible: true,
               barrierLabel: 'User Profile',
               barrierColor: Colors.black.withOpacity(0.6),
-              transitionDuration: const Duration(
-                milliseconds: 300,
-              ),
-              pageBuilder:
-                  (context, animation, secondaryAnimation) {
-                    return const SizedBox.shrink();
-                  },
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return const SizedBox.shrink();
+              },
               transitionBuilder:
-                  (
-                    context,
-                    animation,
-                    secondaryAnimation,
-                    child,
-                  ) {
+                  (context, animation, secondaryAnimation, child) {
                     final curvedAnimation = CurvedAnimation(
                       parent: animation,
                       curve: Curves.easeOutBack,
@@ -89,14 +75,11 @@ class _UserProfileButtonState
                           child: Material(
                             type: MaterialType.transparency,
                             child: Container(
-                              constraints:
-                                  const BoxConstraints(
-                                    maxWidth: 500,
-                                    maxHeight: 700,
-                                  ),
-                              margin: const EdgeInsets.all(
-                                24,
+                              constraints: const BoxConstraints(
+                                maxWidth: 500,
+                                maxHeight: 700,
                               ),
+                              margin: const EdgeInsets.all(24),
                               child: UserProfile(
                                 userId: activeUser?.id,
                               ),
@@ -119,21 +102,18 @@ class _UserProfileButtonState
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: widget
-              .theme
-              .colorScheme
-              .surfaceContainerHighest
+          color: widget.theme.colorScheme.surfaceContainerHighest
               .withOpacity(0.3),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: widget.theme.colorScheme.outline
-                .withOpacity(0.1),
+            color: widget.theme.colorScheme.outline.withOpacity(0.1),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: widget.theme.colorScheme.shadow
-                  .withOpacity(0.05),
+              color: widget.theme.colorScheme.shadow.withOpacity(
+                0.05,
+              ),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -156,8 +136,7 @@ class _UserProfileButtonState
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor:
-                        theme.colorScheme.primary,
+                    backgroundColor: theme.colorScheme.primary,
                     child: Text(
                       initials,
                       style: const TextStyle(
@@ -188,19 +167,15 @@ class _UserProfileButtonState
               const SizedBox(width: 14),
               Flexible(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       user.username,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color:
-                                theme.colorScheme.onSurface,
-                          ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
@@ -220,12 +195,9 @@ class _UserProfileButtonState
                             'Online',
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(
-                                  color: theme
-                                      .colorScheme
-                                      .onSurface
+                                  color: theme.colorScheme.onSurface
                                       .withOpacity(0.7),
-                                  fontWeight:
-                                      FontWeight.w500,
+                                  fontWeight: FontWeight.w500,
                                 ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -237,8 +209,7 @@ class _UserProfileButtonState
               ),
               Icon(
                 Icons.chevron_right,
-                color: theme.colorScheme.onSurface
-                    .withOpacity(0.3),
+                color: theme.colorScheme.onSurface.withOpacity(0.3),
                 size: 20,
               ),
             ],
@@ -248,11 +219,10 @@ class _UserProfileButtonState
               alignment: Alignment.center,
               children: [
                 Container(
-                  width: 40,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary
-                        .withOpacity(0.1),
+                    color: theme.colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -260,16 +230,16 @@ class _UserProfileButtonState
                   initials,
                   style: TextStyle(
                     color: theme.colorScheme.primary,
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  top: 6,
+                  right: 6,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: 7,
+                    height: 7,
                     decoration: BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,
@@ -291,9 +261,8 @@ class _UserProfileButtonState
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: theme
-                    .colorScheme
-                    .surfaceContainerHighest,
+                backgroundColor:
+                    theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.person_outline,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -310,8 +279,7 @@ class _UserProfileButtonState
               const Spacer(),
               Icon(
                 Icons.chevron_right,
-                color: theme.colorScheme.onSurface
-                    .withOpacity(0.3),
+                color: theme.colorScheme.onSurface.withOpacity(0.3),
                 size: 20,
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trading_journal/components/tradesScreen/trade_details_page.dart';
 import '../../models/trade.dart';
 import '../../models/account.dart';
 import '../../services/account_service.dart';
@@ -245,7 +246,7 @@ class _TradeListState extends State<TradeList> {
         ),
         backgroundColor: isSelected
             ? Theme.of(context).colorScheme.primaryContainer
-            : Theme.of(context).colorScheme.surfaceVariant,
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
         onPressed: onTap,
       ),
     );
@@ -296,6 +297,12 @@ class CompactTradeListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         onTap: () {
           // Navigation to trade details
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TradeDetailsPage(tradeId: trade.id!),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(12),

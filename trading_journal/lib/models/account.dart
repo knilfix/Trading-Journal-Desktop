@@ -5,7 +5,9 @@ class Account {
   final double balance;
   final double startBalance;
   final AccountType accountType; // Changed from String to AccountType
-  final String? createdAt;
+  final DateTime? createdAt;
+  final double? target;
+  final double? maxLoss;
 
   Account({
     required this.id,
@@ -15,6 +17,8 @@ class Account {
     required this.startBalance,
     required this.accountType,
     this.createdAt,
+    this.target,
+    this.maxLoss,
   });
 
   Map<String, dynamic> toMap() {
@@ -25,7 +29,10 @@ class Account {
       'balance': balance,
       'start_balance': startBalance,
       'account_type': accountType.name, // Store enum as string
-      'created_at': createdAt,
+      'created_at': createdAt
+          ?.toIso8601String(), // Store as ISO string
+      'target': target,
+      'maxLoss': maxLoss,
     };
   }
 
@@ -36,7 +43,9 @@ class Account {
     double? balance,
     double? startBalance,
     AccountType? accountType, // Updated type
-    String? createdAt,
+    DateTime? createdAt,
+    double? target,
+    double? maxLoss,
   }) {
     return Account(
       id: id ?? this.id,
@@ -46,6 +55,8 @@ class Account {
       startBalance: startBalance ?? this.startBalance,
       accountType: accountType ?? this.accountType,
       createdAt: createdAt ?? this.createdAt,
+      target: target ?? this.target,
+      maxLoss: maxLoss ?? this.maxLoss,
     );
   }
 
@@ -60,7 +71,13 @@ class Account {
         (type) => type.name == map['account_type'],
         orElse: () => AccountType.demo,
       ),
-      createdAt: map['created_at'] as String?,
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'])
+          : null,
+      target: map['target'] != null ? map['target'] as double : null,
+      maxLoss: map['maxLoss'] != null
+          ? map['maxLoss'] as double
+          : null,
     );
   }
 }

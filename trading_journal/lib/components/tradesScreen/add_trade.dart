@@ -3,6 +3,7 @@ import 'package:trading_journal/services/account_service.dart';
 import '../../models/trade.dart';
 import '../../services/trade_service.dart';
 import '../../models/account.dart';
+import 'package:trading_journal/components/tradesScreen/charts/profit_and_loss.dart';
 
 class AddTradeScreen extends StatefulWidget {
   const AddTradeScreen({super.key});
@@ -35,8 +36,26 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Left: Trade Entry Form
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.35,
+          child: _buildTradeEntryForm(context),
+        ),
+        // Right: Performance Chart
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: ProfitLossChart(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTradeEntryForm(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.25,
       decoration: BoxDecoration(
         border: Border(
           right: BorderSide(
@@ -53,7 +72,9 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(
+                    context,
+                  ).dividerColor.withOpacity(0.1),
                   width: 1,
                 ),
               ),
@@ -68,233 +89,229 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                 const SizedBox(width: 12),
                 Text(
                   'New Trade',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
           ),
-
           // Form Content
           Expanded(
             child: Form(
               key: _formKey,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Trade Setup Section
-                          _buildSectionHeader('Trade Setup'),
-                          const SizedBox(height: 16),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Trade Setup Section
+                    _buildSectionHeader('Trade Setup'),
+                    const SizedBox(height: 16),
 
-                          // Currency Pair with modern styling
-                          _buildModernDropdown<CurrencyPair>(
-                            label: 'Currency Pair',
-                            value: _selectedCurrencyPair,
-                            icon: Icons.currency_exchange,
-                            items: CurrencyPair.values.map((pair) {
-                              return DropdownMenuItem(
-                                value: pair,
-                                child: Text(
-                                  pair.symbol,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCurrencyPair = value;
-                              });
-                            },
-                            validator: (value) => value == null
-                                ? 'Please select a currency pair'
-                                : null,
+                    // Currency Pair with modern styling
+                    _buildModernDropdown<CurrencyPair>(
+                      label: 'Currency Pair',
+                      value: _selectedCurrencyPair,
+                      icon: Icons.currency_exchange,
+                      items: CurrencyPair.values.map((pair) {
+                        return DropdownMenuItem(
+                          value: pair,
+                          child: Text(
+                            pair.symbol,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          const SizedBox(height: 20),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCurrencyPair = value;
+                        });
+                      },
+                      validator: (value) => value == null
+                          ? 'Please select a currency pair'
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
 
-                          // Direction with enhanced styling
-                          _buildModernDropdown<TradeDirection>(
-                            label: 'Direction',
-                            value: _direction,
-                            icon: _direction == TradeDirection.buy
-                                ? Icons.trending_up
-                                : Icons.trending_down,
-                            iconColor: _direction == TradeDirection.buy
-                                ? Colors.green
-                                : Colors.red,
-                            items: TradeDirection.values.map((direction) {
-                              final isBuy = direction == TradeDirection.buy;
-                              return DropdownMenuItem(
-                                value: direction,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isBuy
-                                          ? Icons.trending_up
-                                          : Icons.trending_down,
-                                      size: 16,
-                                      color: isBuy ? Colors.green : Colors.red,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      direction
-                                          .toString()
-                                          .split('.')
-                                          .last
-                                          .toUpperCase(),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        color: isBuy
-                                            ? Colors.green
-                                            : Colors.red,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) =>
-                                setState(() => _direction = value!),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Money Management Section
-                          _buildSectionHeader('Money Management'),
-                          const SizedBox(height: 16),
-
-                          // Risk and PnL with modern cards
-                          Row(
+                    // Direction with enhanced styling
+                    _buildModernDropdown<TradeDirection>(
+                      label: 'Direction',
+                      value: _direction,
+                      icon: _direction == TradeDirection.buy
+                          ? Icons.trending_up
+                          : Icons.trending_down,
+                      iconColor: _direction == TradeDirection.buy
+                          ? Colors.green
+                          : Colors.red,
+                      items: TradeDirection.values.map((direction) {
+                        final isBuy = direction == TradeDirection.buy;
+                        return DropdownMenuItem(
+                          value: direction,
+                          child: Row(
                             children: [
-                              Expanded(
-                                child: _buildModernTextField(
-                                  controller: _riskController,
-                                  label: 'Risk Amount',
-                                  prefix: '\$',
-                                  icon: Icons.warning_amber_outlined,
-                                  iconColor: Colors.orange,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: (value) {
-                                    if (value?.isEmpty ?? true) {
-                                      return 'Required';
-                                    }
-                                    if (double.tryParse(value!) == null) {
-                                      return 'Invalid number';
-                                    }
-                                    return null;
-                                  },
-                                ),
+                              Icon(
+                                isBuy
+                                    ? Icons.trending_up
+                                    : Icons.trending_down,
+                                size: 16,
+                                color: isBuy
+                                    ? Colors.green
+                                    : Colors.red,
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildModernTextField(
-                                  controller: _pnlController,
-                                  label: 'P&L',
-                                  prefix: '\$',
-                                  icon: Icons.account_balance_wallet_outlined,
-                                  iconColor: Colors.blue,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: (value) {
-                                    if (value?.isEmpty ?? true) {
-                                      return 'Required';
-                                    }
-                                    if (double.tryParse(value!) == null) {
-                                      return 'Invalid number';
-                                    }
-                                    return null;
-                                  },
+                              const SizedBox(width: 8),
+                              Text(
+                                direction
+                                    .toString()
+                                    .split('.')
+                                    .last
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: isBuy
+                                      ? Colors.green
+                                      : Colors.red,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
-
-                          // Timing Section
-                          _buildSectionHeader('Timing'),
-                          const SizedBox(height: 16),
-
-                          // Enhanced Date/Time Pickers
-                          _ModernDateTimePicker(
-                            label: 'Entry Time',
-                            dateTime: _entryTime,
-                            icon: Icons.login_outlined,
-                            iconColor: Colors.green,
-                            onChanged: (dt) => setState(() => _entryTime = dt),
-                          ),
-                          const SizedBox(height: 16),
-                          _ModernDateTimePicker(
-                            label: 'Exit Time',
-                            dateTime: _exitTime,
-                            icon: Icons.logout_outlined,
-                            iconColor: Colors.red,
-                            onChanged: (dt) => setState(() => _exitTime = dt),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Notes Section
-                          _buildSectionHeader('Notes'),
-                          const SizedBox(height: 16),
-                          _buildModernTextField(
-                            controller: _notesController,
-                            label: 'Trade Notes (Optional)',
-                            icon: Icons.note_outlined,
-                            maxLines: 3,
-                            hintText:
-                                'Add any observations or strategy notes...',
-                          ),
-                        ],
-                      ),
+                        );
+                      }).toList(),
+                      onChanged: (value) =>
+                          setState(() => _direction = value!),
                     ),
+                    const SizedBox(height: 32),
+
+                    // Money Management Section
+                    _buildSectionHeader('Money Management'),
+                    const SizedBox(height: 16),
+
+                    // Risk and PnL with modern cards
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildModernTextField(
+                            controller: _riskController,
+                            label: 'Risk Amount',
+                            prefix: '\$',
+                            icon: Icons.warning_amber_outlined,
+                            iconColor: Colors.orange,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                            validator: (value) {
+                              if (value?.isEmpty ?? true) {
+                                return 'Required';
+                              }
+                              if (double.tryParse(value!) == null) {
+                                return 'Invalid number';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildModernTextField(
+                            controller: _pnlController,
+                            label: 'P&L',
+                            prefix: '\$',
+                            icon:
+                                Icons.account_balance_wallet_outlined,
+                            iconColor: Colors.blue,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                            validator: (value) {
+                              if (value?.isEmpty ?? true) {
+                                return 'Required';
+                              }
+                              if (double.tryParse(value!) == null) {
+                                return 'Invalid number';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Timing Section
+                    _buildSectionHeader('Timing'),
+                    const SizedBox(height: 16),
+
+                    // Enhanced Date/Time Pickers
+                    _ModernDateTimePicker(
+                      label: 'Entry Time',
+                      dateTime: _entryTime,
+                      icon: Icons.login_outlined,
+                      iconColor: Colors.green,
+                      onChanged: (dt) =>
+                          setState(() => _entryTime = dt),
+                    ),
+                    const SizedBox(height: 16),
+                    _ModernDateTimePicker(
+                      label: 'Exit Time',
+                      dateTime: _exitTime,
+                      icon: Icons.logout_outlined,
+                      iconColor: Colors.red,
+                      onChanged: (dt) =>
+                          setState(() => _exitTime = dt),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Notes Section
+                    _buildSectionHeader('Notes'),
+                    const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _notesController,
+                      label: 'Trade Notes (Optional)',
+                      icon: Icons.note_outlined,
+                      maxLines: 3,
+                      hintText:
+                          'Add any observations or strategy notes...',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Modern Submit Button
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(
+                    context,
+                  ).dividerColor.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _submitTrade,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text(
+                  'Record Trade',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
-
-                  // Modern Submit Button
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Theme.of(
-                            context,
-                          ).dividerColor.withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: _submitTrade,
-                        icon: const Icon(Icons.save_outlined),
-                        label: const Text(
-                          'Record Trade',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -448,7 +465,9 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
     ); // Debug 2
 
     if (activeAccount == null) {
-      debugPrint('[DEBUG] No active account - showing error'); // Debug 3
+      debugPrint(
+        '[DEBUG] No active account - showing error',
+      ); // Debug 3
       _showError('No active account selected.');
       return;
     }
@@ -467,7 +486,9 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
     }
 
     try {
-      debugPrint('[DEBUG] Attempting to record trade with data:'); // Debug 6
+      debugPrint(
+        '[DEBUG] Attempting to record trade with data:',
+      ); // Debug 6
       debugPrint('  - Account: ${activeAccount.id}');
       debugPrint('  - Pair: ${_selectedCurrencyPair!.symbol}');
       debugPrint('  - Risk: ${_riskController.text}');
@@ -528,7 +549,9 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
           ],
         ),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
     );
   }
@@ -579,11 +602,12 @@ class _ModernDateTimePicker extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -624,7 +648,9 @@ class _ModernDateTimePicker extends StatelessWidget {
             Icon(
               Icons.calendar_today_outlined,
               size: 18,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(0.5),
             ),
           ],
         ),
@@ -653,5 +679,11 @@ Future<DateTime?> showDateTimePicker(
 
   if (time == null) return null;
 
-  return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+    time.hour,
+    time.minute,
+  );
 }

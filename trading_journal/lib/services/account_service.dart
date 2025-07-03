@@ -11,7 +11,8 @@ class AccountService extends ChangeNotifier {
   User? get activeUser => _userService.activeUser;
 
   final List<Account> _accounts = [];
-  final ValueNotifier<List<Account>> accountsListenable = ValueNotifier([]);
+  final ValueNotifier<List<Account>> accountsListenable =
+      ValueNotifier([]);
 
   int _nextId = 1;
   Account? _activeAccount;
@@ -56,15 +57,21 @@ class AccountService extends ChangeNotifier {
       debugPrint('No active user found. Cannot create test account.');
       return;
     }
+    final double balance = 10000;
+
+    final double target = balance * 1.08;
+    final double maxLoss = balance * 0.9;
 
     final testAccount = Account(
       id: _nextId++,
       userId: activeUser!.id!,
       name: 'Testing Account',
-      balance: 10000.0,
-      startBalance: 10000.0,
+      balance: balance,
+      startBalance: balance,
       accountType: AccountType.demo,
-      createdAt: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now(),
+      target: target,
+      maxLoss: maxLoss,
     );
 
     _accounts.add(testAccount);
@@ -105,7 +112,8 @@ class AccountService extends ChangeNotifier {
       return null;
     }
 
-   
+    final double target = balance * 1.08;
+    final double maxLoss = balance * 0.9;
 
     final account = Account(
       id: _nextId++,
@@ -114,7 +122,9 @@ class AccountService extends ChangeNotifier {
       balance: balance,
       startBalance: balance,
       accountType: accountType,
-      createdAt: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now(),
+      target: target,
+      maxLoss: maxLoss,
     );
 
     _accounts.add(account);
@@ -129,7 +139,8 @@ class AccountService extends ChangeNotifier {
   Account? getAccountById(int id) {
     try {
       return _accounts.firstWhere(
-        (account) => account.id == id && account.userId == activeUser?.id,
+        (account) =>
+            account.id == id && account.userId == activeUser?.id,
       );
     } catch (e) {
       return null;
@@ -139,11 +150,14 @@ class AccountService extends ChangeNotifier {
   // Update account
   Future<Account?> updateAccount({
     required int id,
-    double? balance,
-    String? accountType,
+    String? name,
+
+    double? target,
+    double? maxLoss,
   }) async {
     final accountIndex = _accounts.indexWhere(
-      (account) => account.id == id && account.userId == activeUser?.id,
+      (account) =>
+          account.id == id && account.userId == activeUser?.id,
     );
 
     if (accountIndex == -1) return null;
@@ -152,11 +166,13 @@ class AccountService extends ChangeNotifier {
     final updatedAccount = Account(
       id: oldAccount.id,
       userId: oldAccount.userId,
-      name: oldAccount.name,
-      balance: balance ?? oldAccount.balance,
+      name: name ?? oldAccount.name,
+      balance: oldAccount.balance,
       startBalance: oldAccount.startBalance,
       accountType: oldAccount.accountType,
       createdAt: oldAccount.createdAt,
+      target: target ?? oldAccount.target,
+      maxLoss: maxLoss ?? oldAccount.maxLoss,
     );
 
     _accounts[accountIndex] = updatedAccount;
@@ -164,13 +180,37 @@ class AccountService extends ChangeNotifier {
     return updatedAccount;
   }
 
-  Future<Account?> updateAccountBalance(int id, double newBalance) async {
+  Future<Account?> updateAccountTarget(
+    int id,
+    double? target,
+    double? maxLoss,
+  ) async {
+    final accountIndex = _accounts.indexWhere(
+      (account) =>
+          account.id == id && account.userId == activeUser?.id,
+    );
+    if (accountIndex == -1) return null;
+    final oldAccount = _accounts[accountIndex];
+    final updatedAccount = oldAccount.copyWith(
+      target: target,
+      maxLoss: maxLoss,
+    );
+    _accounts[accountIndex] = updatedAccount;
+    _updateListeners();
+    return updatedAccount;
+  }
+
+  Future<Account?> updateAccountBalance(
+    int id,
+    double newBalance,
+  ) async {
     if (newBalance < 0) {
       debugPrint('Balance cannot be negative');
     }
 
     final accountIndex = _accounts.indexWhere(
-      (account) => account.id == id && account.userId == activeUser?.id,
+      (account) =>
+          account.id == id && account.userId == activeUser?.id,
     );
 
     if (accountIndex == -1) {
@@ -189,7 +229,9 @@ class AccountService extends ChangeNotifier {
     }
 
     _updateListeners();
-    debugPrint("[AccountService] Listeners notified. New balance: $newBalance");
+    debugPrint(
+      "[AccountService] Listeners notified. New balance: $newBalance",
+    );
 
     return _accounts[accountIndex];
   }
@@ -197,7 +239,8 @@ class AccountService extends ChangeNotifier {
   // Delete account
   Future<bool> deleteAccount(int id) async {
     final accountIndex = _accounts.indexWhere(
-      (account) => account.id == id && account.userId == activeUser?.id,
+      (account) =>
+          account.id == id && account.userId == activeUser?.id,
     );
 
     if (accountIndex == -1) return false;

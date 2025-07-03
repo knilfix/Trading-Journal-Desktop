@@ -7,8 +7,7 @@ class TradesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String name = 'Trading History';
-    final String displayMessage =
-        'Trade logs and history tracking ';
+    final String displayMessage = 'Trade logs and history tracking ';
     final Icon icon = Icon(
       Icons.show_chart,
       size: 64,

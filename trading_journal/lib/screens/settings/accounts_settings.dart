@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:trading_journal/components/accounts/account_edit_form.dart';
 import '../../services/account_service.dart';
 import '../../models/account.dart';
+import '../../components/accounts/account_list.dart';
+import '../../components/accounts/account_details.dart';
+import '../../components/accounts/add_account_dialog.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});
@@ -10,9 +14,11 @@ class AccountManagementScreen extends StatefulWidget {
       _AccountManagementScreenState();
 }
 
-class _AccountManagementScreenState extends State<AccountManagementScreen> {
+class _AccountManagementScreenState
+    extends State<AccountManagementScreen> {
   final AccountService _accountService = AccountService.instance;
   Account? _selectedAccount;
+  bool _isEditing = false;
 
   void _selectAccount(Account account) {
     setState(() {
@@ -80,7 +86,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create account. Select Active User'),
+            content: Text(
+              'Failed to create account. Select Active User',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -91,7 +99,8 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isActive = _accountService.activeAccount?.id == _selectedAccount?.id;
+    final isActive =
+        _accountService.activeAccount?.id == _selectedAccount?.id;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Account Management')),
@@ -110,26 +119,11 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                     ),
                   ),
                 ),
-                child: ListView.builder(
-                  itemCount: accounts.length.clamp(0, 20), // Limit to 20
-                  itemBuilder: (context, index) {
-                    final account = accounts[index];
-                    final isSelected = _selectedAccount?.id == account.id;
-
-                    return ListTile(
-                      selected: isSelected,
-                      title: Text('Account #${account.name}'),
-                      subtitle: Text('Balance: \$${account.balance}'),
-                      trailing: IconButton(
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: theme.colorScheme.error,
-                        ),
-                        onPressed: () => _deleteAccount(account.id),
-                      ),
-                      onTap: () => _selectAccount(account),
-                    );
-                  },
+                child: AccountList(
+                  accounts: accounts,
+                  selectedAccount: _selectedAccount,
+                  onSelect: _selectAccount,
+                  onDelete: _deleteAccount,
                 ),
               );
             },
@@ -138,63 +132,41 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           // Right Panel - Account Details
           Expanded(
             child: _selectedAccount == null
-                ? Center(child: Text('Select an account to view details'))
-                : Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Account Details',
-                          style: theme.textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 16),
-                        Text('Account Name: ${_selectedAccount!.name}'),
-                        Text('Balance: \$${_selectedAccount!.balance}'),
-                        Text('Account Type: ${_selectedAccount!.accountType}'),
-                        Text('Created At: ${_selectedAccount!.createdAt}'),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                // Logic to update account (implement later)
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                              ),
-                              child: const Text('Update Account'),
-                            ),
+                ? Center(
+                    child: Text('Select an account to view details'),
+                  )
+                : _isEditing
+                ? AccountEditForm(
+                    account: _selectedAccount!,
+                    onSave: (name, target, maxLoss) async {
+                      await _accountService.updateAccount(
+                        id: _selectedAccount!.id,
+                        name: name,
+                        target: target,
+                        maxLoss: maxLoss,
+                      );
+                      setState(() {
+                        _selectedAccount = _accountService
+                            .getAccountById(_selectedAccount!.id);
+                        _isEditing = false;
+                      });
 
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _toggleActiveAccount,
-                                icon: Icon(
-                                  isActive
-                                      ? Icons.person_remove
-                                      : Icons.person_add,
-                                ),
-                                label: Text(
-                                  isActive ? 'Deactivate' : 'Activate',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  backgroundColor: isActive
-                                      ? Colors.orange
-                                      : Colors.green,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
+                      //show confirmation
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Changes saved'),
                         ),
-                      ],
-                    ),
+                      );
+                    },
+                    onCancel: () =>
+                        setState(() => _isEditing = false),
+                  )
+                : AccountDetails(
+                    account: _selectedAccount!,
+                    isActive: isActive,
+                    onToggleActive: _toggleActiveAccount,
+                    onUpdateTarget: (target) async {},
+                    onEdit: () => setState(() => _isEditing = true),
                   ),
           ),
         ],
@@ -204,117 +176,15 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           showDialog(
             context: context,
             builder: (context) {
-              AccountType selectedAccountType = AccountType
-                  .backtesting; // Default selection // Default selection
-              TextEditingController balanceController = TextEditingController();
-              TextEditingController nameController = TextEditingController();
-
-              return AlertDialog(
-                backgroundColor: theme.dialogBackgroundColor, // Match theme
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                title: Text(
-                  'Add New Account',
-                  style: theme.textTheme.titleLarge,
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextField(
-                      controller: nameController,
-                      label: 'Account Name',
-                      icon: Icons.account_circle_outlined,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: balanceController,
-                      label: 'Initial Balance',
-                      icon: Icons.account_balance_wallet_outlined,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<AccountType>(
-                      decoration: InputDecoration(
-                        labelText: 'Account Type',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        prefixIcon: const Icon(Icons.category_outlined),
-                      ),
-                      value: selectedAccountType,
-                      onChanged: (AccountType? value) {
-                        if (value != null) {
-                          selectedAccountType = value;
-                        }
-                      },
-                      items: AccountType.values.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.displayName),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-                actions: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.onSurface,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          minimumSize: const Size(120, 48),
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _createAccount(
-                            context,
-                            double.tryParse(balanceController.text) ?? 0.0,
-                            selectedAccountType,
-                            nameController.text,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          minimumSize: const Size(120, 48),
-                        ),
-                        child: const Text('Add Account'),
-                      ),
-                    ],
-                  ),
-                ],
+              return AddAccountDialog(
+                onSubmit: (balance, accountType, name) {
+                  _createAccount(context, balance, accountType, name);
+                },
               );
             },
           );
         },
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: isPassword,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        prefixIcon: Icon(icon),
       ),
     );
   }

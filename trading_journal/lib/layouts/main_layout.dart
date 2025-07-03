@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:trading_journal/screens/calendar/table_calendar.dart';
 import '../screens/dashboard_screen.dart';
-import '../screens/analytics_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/portfolio_screen.dart';
 import '../components/user/user_profile_button.dart';
@@ -43,7 +43,7 @@ class _MainLayoutState extends State<MainLayout>
       icon: Icons.analytics_outlined,
       selectedIcon: Icons.analytics,
       label: 'Analytics',
-      screen: const AnalyticsScreen(),
+      screen: const TradeCalendar(),
     ),
     NavigationItem(
       icon: Icons.settings_outlined,
@@ -91,8 +91,7 @@ class _MainLayoutState extends State<MainLayout>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final currentScreen =
-        _navigationItems[_selectedIndex].screen;
+    final currentScreen = _navigationItems[_selectedIndex].screen;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -100,7 +99,7 @@ class _MainLayoutState extends State<MainLayout>
         children: [
           // Sidebar Navigation
           SizedBox(
-            width: _isExpanded ? 280 : 80,
+            width: _isExpanded ? 280 : 60,
 
             child: Container(
               decoration: BoxDecoration(
@@ -109,9 +108,7 @@ class _MainLayoutState extends State<MainLayout>
                     : Colors.white,
                 border: Border(
                   right: BorderSide(
-                    color: theme.dividerColor.withOpacity(
-                      0.1,
-                    ),
+                    color: theme.dividerColor.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -141,18 +138,13 @@ class _MainLayoutState extends State<MainLayout>
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      theme
-                                          .colorScheme
-                                          .primary,
-                                      theme
-                                          .colorScheme
-                                          .secondary,
+                                      theme.colorScheme.primary,
+                                      theme.colorScheme.secondary,
                                     ],
                                   ),
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                        12,
-                                      ),
+                                  borderRadius: BorderRadius.circular(
+                                    12,
+                                  ),
                                 ),
                                 child: const Icon(
                                   Icons.trending_up,
@@ -164,11 +156,9 @@ class _MainLayoutState extends State<MainLayout>
                               Flexible(
                                 child: Column(
                                   crossAxisAlignment:
-                                      CrossAxisAlignment
-                                          .start,
+                                      CrossAxisAlignment.start,
                                   mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .center,
+                                      MainAxisAlignment.center,
                                   children: [
                                     Text(
                                       'Trading Journal',
@@ -177,27 +167,22 @@ class _MainLayoutState extends State<MainLayout>
                                           .titleMedium
                                           ?.copyWith(
                                             fontWeight:
-                                                FontWeight
-                                                    .bold,
+                                                FontWeight.bold,
                                             color: theme
                                                 .colorScheme
                                                 .onSurface,
                                           ),
-                                      overflow: TextOverflow
-                                          .ellipsis,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
                                       'Pro Version',
-                                      style: theme
-                                          .textTheme
-                                          .bodySmall
+                                      style: theme.textTheme.bodySmall
                                           ?.copyWith(
                                             color: theme
                                                 .colorScheme
                                                 .secondary,
                                           ),
-                                      overflow: TextOverflow
-                                          .ellipsis,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -210,9 +195,8 @@ class _MainLayoutState extends State<MainLayout>
                                   onPressed: _toggleSidebar,
                                   icon: Icon(
                                     Icons.menu_open,
-                                    color: theme
-                                        .colorScheme
-                                        .onSurface,
+                                    color:
+                                        theme.colorScheme.onSurface,
                                   ),
                                 ),
                               ),
@@ -223,9 +207,7 @@ class _MainLayoutState extends State<MainLayout>
                               onPressed: _toggleSidebar,
                               icon: Icon(
                                 Icons.menu,
-                                color: theme
-                                    .colorScheme
-                                    .onSurface,
+                                color: theme.colorScheme.onSurface,
                               ),
                               iconSize: 24,
                             ),
@@ -241,10 +223,8 @@ class _MainLayoutState extends State<MainLayout>
                       ),
                       itemCount: _navigationItems.length,
                       itemBuilder: (context, index) {
-                        final item =
-                            _navigationItems[index];
-                        final isSelected =
-                            _selectedIndex == index;
+                        final item = _navigationItems[index];
+                        final isSelected = _selectedIndex == index;
 
                         return Container(
                           margin: EdgeInsets.symmetric(
@@ -254,8 +234,7 @@ class _MainLayoutState extends State<MainLayout>
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              borderRadius:
-                                  BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                               onTap: () {
                                 setState(() {
                                   _selectedIndex = index;
@@ -263,35 +242,24 @@ class _MainLayoutState extends State<MainLayout>
                                 });
                               },
                               child: Container(
-                                padding:
-                                    EdgeInsets.symmetric(
-                                      horizontal:
-                                          _isExpanded
-                                          ? 16
-                                          : 8,
-                                      vertical: 12,
-                                    ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: _isExpanded ? 16 : 0,
+                                  vertical: _isExpanded ? 12 : 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? theme
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(
-                                              0.1,
-                                            )
+                                      ? theme.colorScheme.primary
+                                            .withOpacity(0.1)
                                       : Colors.transparent,
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                        12,
-                                      ),
+                                  borderRadius: BorderRadius.circular(
+                                    12,
+                                  ),
                                   border: isSelected
                                       ? Border.all(
                                           color: theme
                                               .colorScheme
                                               .primary
-                                              .withOpacity(
-                                                0.2,
-                                              ),
+                                              .withOpacity(0.2),
                                         )
                                       : null,
                                 ),
@@ -302,8 +270,7 @@ class _MainLayoutState extends State<MainLayout>
                                             isSelected
                                                 ? item.selectedIcon
                                                 : item.icon,
-                                            color:
-                                                isSelected
+                                            color: isSelected
                                                 ? theme
                                                       .colorScheme
                                                       .primary
@@ -315,31 +282,30 @@ class _MainLayoutState extends State<MainLayout>
                                                       ),
                                             size: 24,
                                           ),
-                                          const SizedBox(
-                                            width: 16,
-                                          ),
+                                          const SizedBox(width: 16),
                                           Flexible(
                                             child: Text(
                                               item.label,
-                                              style: theme.textTheme.bodyMedium?.copyWith(
-                                                color:
-                                                    isSelected
-                                                    ? theme
-                                                          .colorScheme
-                                                          .primary
-                                                    : theme
-                                                          .colorScheme
-                                                          .onSurface,
-                                                fontWeight:
-                                                    isSelected
-                                                    ? FontWeight
-                                                          .w600
-                                                    : FontWeight
-                                                          .normal,
-                                              ),
-                                              overflow:
-                                                  TextOverflow
-                                                      .ellipsis,
+                                              style: theme
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.copyWith(
+                                                    color: isSelected
+                                                        ? theme
+                                                              .colorScheme
+                                                              .primary
+                                                        : theme
+                                                              .colorScheme
+                                                              .onSurface,
+                                                    fontWeight:
+                                                        isSelected
+                                                        ? FontWeight
+                                                              .w600
+                                                        : FontWeight
+                                                              .normal,
+                                                  ),
+                                              overflow: TextOverflow
+                                                  .ellipsis,
                                             ),
                                           ),
                                         ],
@@ -349,6 +315,7 @@ class _MainLayoutState extends State<MainLayout>
                                           isSelected
                                               ? item.selectedIcon
                                               : item.icon,
+                                          size: 24,
                                           color: isSelected
                                               ? theme
                                                     .colorScheme
@@ -356,10 +323,7 @@ class _MainLayoutState extends State<MainLayout>
                                               : theme
                                                     .colorScheme
                                                     .onSurface
-                                                    .withOpacity(
-                                                      0.7,
-                                                    ),
-                                          size: 24,
+                                                    .withOpacity(0.7),
                                         ),
                                       ),
                               ),
@@ -400,8 +364,9 @@ class _MainLayoutState extends State<MainLayout>
                             : Colors.white,
                         border: Border(
                           bottom: BorderSide(
-                            color: theme.dividerColor
-                                .withOpacity(0.1),
+                            color: theme.dividerColor.withOpacity(
+                              0.1,
+                            ),
                           ),
                         ),
                       ),
@@ -409,17 +374,12 @@ class _MainLayoutState extends State<MainLayout>
                         children: [
                           Expanded(
                             child: Text(
-                              _navigationItems[_selectedIndex]
-                                  .label,
-                              style: theme
-                                  .textTheme
-                                  .headlineSmall
+                              _navigationItems[_selectedIndex].label,
+                              style: theme.textTheme.headlineSmall
                                   ?.copyWith(
-                                    fontWeight:
-                                        FontWeight.bold,
-                                    color: theme
-                                        .colorScheme
-                                        .onSurface,
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        theme.colorScheme.onSurface,
                                   ),
                             ),
                           ),
@@ -431,11 +391,8 @@ class _MainLayoutState extends State<MainLayout>
                             icon: Stack(
                               children: [
                                 Icon(
-                                  Icons
-                                      .notifications_outlined,
-                                  color: theme
-                                      .colorScheme
-                                      .onSurface,
+                                  Icons.notifications_outlined,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                                 Positioned(
                                   right: 0,
@@ -443,12 +400,10 @@ class _MainLayoutState extends State<MainLayout>
                                   child: Container(
                                     width: 8,
                                     height: 8,
-                                    decoration:
-                                        const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape
-                                              .circle,
-                                        ),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
                                 ),
                               ],

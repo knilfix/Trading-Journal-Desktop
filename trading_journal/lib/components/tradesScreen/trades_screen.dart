@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/account_service.dart';
 import 'add_trade.dart';
-import 'account_metrics.dart';
 import 'trades_tab_view.dart';
+import 'charts/profit_and_loss.dart';
 
 class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});
@@ -21,8 +21,7 @@ class _TradesScreenState extends State<TradesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeAccount =
-        AccountService.instance.activeAccount;
+    final activeAccount = AccountService.instance.activeAccount;
 
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
@@ -54,14 +53,10 @@ class _TradesScreenState extends State<TradesScreen> {
                 // Content
                 Expanded(
                   child: AnimatedSwitcher(
-                    duration: const Duration(
-                      milliseconds: 300,
-                    ),
+                    duration: const Duration(milliseconds: 300),
                     child: _selectedIndex == 0
-                        ? _buildDashboardView()
-                        : _buildAllTradesView(
-                            activeAccount.id,
-                          ),
+                        ? _buildTradeEntryView()
+                        : _buildAllTradesView(activeAccount.id),
                   ),
                 ),
               ],
@@ -69,13 +64,13 @@ class _TradesScreenState extends State<TradesScreen> {
     );
   }
 
-  Widget _buildDashboardView() {
+  Widget _buildTradeEntryView() {
     return Row(
-      key: const ValueKey('dashboard'),
+      key: const ValueKey('trade_entry'),
       children: [
-        // Left Panel - Trade Entry (25%)
+        // Left Panel - Trade Entry (35%)
         SizedBox(
-          width: MediaQuery.of(context).size.width * 0.25,
+          width: MediaQuery.of(context).size.width * 0.35,
           child: const AddTradeScreen(),
         ),
         const VerticalDivider(
@@ -83,8 +78,13 @@ class _TradesScreenState extends State<TradesScreen> {
           thickness: 1,
           color: Colors.grey,
         ),
-        // Right Panel - Metrics (75%)
-        const Expanded(child: AccountMetricsWidget()),
+        // Right Panel - Performance Chart (65%)
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: ProfitLossChart(),
+          ),
+        ),
       ],
     );
   }
