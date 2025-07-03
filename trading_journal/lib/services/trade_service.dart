@@ -42,10 +42,15 @@ class TradeService extends ChangeNotifier {
     required DateTime exitTime,
     String? notes,
   }) async {
-    assert(exitTime.isAfter(entryTime), "Exit time must be after entry time");
+    assert(
+      exitTime.isAfter(entryTime),
+      "Exit time must be after entry time",
+    );
 
     try {
-      final account = AccountService.instance.getAccountById(accountId);
+      final account = AccountService.instance.getAccountById(
+        accountId,
+      );
       if (account == null) {
         debugPrint("[ERROR] Account $accountId not found");
         return null;
@@ -54,10 +59,8 @@ class TradeService extends ChangeNotifier {
       final newBalance = account.balance + pnl;
       assert(newBalance >= 0, "Account balance cannot be negative");
 
-      final updatedAccount = await AccountService.instance.updateAccountBalance(
-        accountId,
-        newBalance,
-      );
+      final updatedAccount = await AccountService.instance
+          .updateAccountBalance(accountId, newBalance);
       if (updatedAccount == null) return null;
 
       final trade = Trade(
@@ -77,7 +80,11 @@ class TradeService extends ChangeNotifier {
       _tradesStream.add(_trades);
       notifyListeners();
 
-      _logTradeMetrics(trade, account.balance, accountId); // Now called!
+      _logTradeMetrics(
+        trade,
+        account.balance,
+        accountId,
+      ); // Now called!
       return trade;
     } catch (e, stackTrace) {
       debugPrint("[EXCEPTION] Failed to record trade: $e");
@@ -86,7 +93,11 @@ class TradeService extends ChangeNotifier {
     }
   }
 
-  void _logTradeMetrics(Trade trade, double previousBalance, int accountId) {
+  void _logTradeMetrics(
+    Trade trade,
+    double previousBalance,
+    int accountId,
+  ) {
     // 1. Get the current balance AFTER trade execution
     final currentBalance =
         AccountService.instance.getAccountById(accountId)?.balance ??
@@ -104,7 +115,8 @@ class TradeService extends ChangeNotifier {
       'PnL': '\$${trade.pnl.toStringAsFixed(2)}',
       'Duration':
           '${trade.duration.inHours}h ${trade.duration.inMinutes.remainder(60)}m',
-      'Risk:Reward': '1:${trade.riskRewardRatio.abs().toStringAsFixed(2)}',
+      'Risk:Reward':
+          '1:${trade.riskRewardRatio.abs().toStringAsFixed(2)}',
       'Previous Balance': '\$${previousBalance.toStringAsFixed(2)}',
       'Expected Balance': '\$${expectedBalance.toStringAsFixed(2)}',
       'Current Balance': '\$${currentBalance.toStringAsFixed(2)}',
@@ -152,10 +164,8 @@ class TradeService extends ChangeNotifier {
       final newBalance = account.balance - tradeToDelete.pnl;
 
       // 4. Update the account balance
-      final updatedAccount = await AccountService.instance.updateAccountBalance(
-        tradeToDelete.accountId,
-        newBalance,
-      );
+      final updatedAccount = await AccountService.instance
+          .updateAccountBalance(tradeToDelete.accountId, newBalance);
       if (updatedAccount == null) return false;
 
       // 5. Remove the trade
@@ -192,7 +202,9 @@ class TradeService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final account = AccountService.instance.getAccountById(accountId);
+      final account = AccountService.instance.getAccountById(
+        accountId,
+      );
       if (account == null) {
         debugPrint('Account $accountId not found');
         return;
@@ -233,7 +245,9 @@ class TradeService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final account = AccountService.instance.getAccountById(accountId);
+      final account = AccountService.instance.getAccountById(
+        accountId,
+      );
       if (account == null) return;
 
       final demoTrades = await _generateTestTrades(accountId);
@@ -262,7 +276,6 @@ class TradeService extends ChangeNotifier {
 
   Future<List<Trade>> _generateTestTrades(int accountId) async {
     final random = Random();
-    final baseTime = DateTime.now().subtract(const Duration(days: 7));
     final account = AccountService.instance.getAccountById(accountId);
     if (account == null) throw Exception('Account not found');
 
@@ -274,7 +287,16 @@ class TradeService extends ChangeNotifier {
     const fixedRewardRatio = 4.0; // Always target 4:1 RR
     const winRate = 0.4; // 40% win rate
 
+    // Start from the account's createdAt date, or now if null
+    DateTime entryTime = account.createdAt ?? DateTime.now();
+
     for (int i = 0; i < 40; i++) {
+      // Skip weekends
+      while (entryTime.weekday == DateTime.saturday ||
+          entryTime.weekday == DateTime.sunday) {
+        entryTime = entryTime.add(const Duration(days: 1));
+      }
+
       // Calculate fixed risk amount (1% of current balance)
       final riskAmount = runningBalance * (riskPercentage / 100);
 
@@ -282,21 +304,26 @@ class TradeService extends ChangeNotifier {
       final isWin = random.nextDouble() <= winRate;
 
       // Fixed PnL calculation (4:1 on wins, -1R on losses)
-      final pnl = isWin ? (riskAmount * fixedRewardRatio) : -riskAmount;
+      final pnl = isWin
+          ? (riskAmount * fixedRewardRatio)
+          : -riskAmount;
 
       // Update running balance
       runningBalance += pnl;
 
-      // Trade timing (unchanged)
-      final entryTime = baseTime.add(Duration(hours: i * 6));
-      final exitTime = entryTime.add(Duration(hours: 1 + random.nextInt(3)));
+      // Trade timing
+      final exitTime = entryTime.add(
+        Duration(hours: 1 + random.nextInt(3)),
+      );
 
       final trade = Trade(
         id: _nextId++,
         accountId: accountId,
-        currencyPair:
-            CurrencyPair.values[random.nextInt(CurrencyPair.values.length)],
-        direction: random.nextBool() ? TradeDirection.buy : TradeDirection.sell,
+        currencyPair: CurrencyPair
+            .values[random.nextInt(CurrencyPair.values.length)],
+        direction: random.nextBool()
+            ? TradeDirection.buy
+            : TradeDirection.sell,
         riskAmount: riskAmount,
         pnl: pnl,
         postTradeBalance: runningBalance,
@@ -307,6 +334,9 @@ class TradeService extends ChangeNotifier {
       );
 
       trades.add(trade);
+
+      // Move to next day (skip weekends in next iteration)
+      entryTime = entryTime.add(const Duration(days: 1));
 
       // Debug output with risk consistency verification
       debugPrint('''
