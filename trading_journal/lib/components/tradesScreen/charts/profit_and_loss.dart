@@ -9,10 +9,10 @@ import '../../../models/account.dart';
 class ProfitLossChart extends StatefulWidget {
   final int? maxTradesToShow;
   static const double chartHeight = 640;
-  static const double containerPadding = 20;
+  static const double containerPadding = 10;
   static const double dotRadius = 2;
   static const double dotStrokeWidth = 1;
-  static const double lineWidth = 2;
+  static const double lineWidth = 0.5;
   static const double baselineOpacity = 0.3;
   static const double areaOpacity = 0.2;
   static const double gridOpacity = 0.1;
@@ -28,12 +28,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
   bool _showLastTenTradesOnly = false;
   final Color _profitColor = Colors.green;
   final Color _lossColor = Colors.red;
-  final Color _mainLineColor = const Color.fromARGB(
-    255,
-    83,
-    129,
-    231,
-  );
+  final Color _mainLineColor = const Color.fromARGB(255, 83, 129, 231);
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +58,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
           );
         }
 
-        final trades = tradeService.getTradesForAccount(
-          activeAccount.id,
-        );
+        final trades = tradeService.getTradesForAccount(activeAccount.id);
 
         final processor = TradeDataProcessor(
           trades,
@@ -75,13 +68,11 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
 
         final int tradeCount = trades.length;
         final double yPadding =
-            (((activeAccount.target ?? 0) -
-                    (activeAccount.maxLoss ?? 0))
+            (((activeAccount.target ?? 0) - (activeAccount.maxLoss ?? 0))
                 .abs()) *
             0.1;
 
-        final bool useTargetRange =
-            tradeCount <= 1; // or 2, adjust as you like
+        final bool useTargetRange = tradeCount <= 1; // or 2, adjust as you like
 
         final double minY = useTargetRange
             ? ((activeAccount.maxLoss ?? 0) - yPadding)
@@ -92,9 +83,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
 
         return Container(
           height: ProfitLossChart.chartHeight,
-          padding: const EdgeInsets.all(
-            ProfitLossChart.containerPadding,
-          ),
+          padding: const EdgeInsets.all(ProfitLossChart.containerPadding),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
@@ -107,37 +96,9 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Redraw'),
-                    onPressed: () {
-                      setState(() {});
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              _buildChartHeader(
-                theme,
-                trades.length,
-                activeAccount,
-                processor,
-              ),
+              _buildChartHeader(theme, trades.length, activeAccount, processor),
               const SizedBox(height: 8),
-              _buildLegend(
-                theme,
-                activeAccount.target,
-                activeAccount.maxLoss,
-              ),
+              _buildLegend(theme, activeAccount.target, activeAccount.maxLoss),
               _buildLastTenToggle(theme),
               const SizedBox(height: 16),
               Expanded(
@@ -182,8 +143,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
 
     // If no trades, fake a range to help draw the X-axis and baseline lines
     final double maxX = hasTrades ? spots.last.x : 10;
-    final double extendedMaxX =
-        maxX / (1 - ProfitLossChart.emptySpaceFraction);
+    final double extendedMaxX = maxX / (1 - ProfitLossChart.emptySpaceFraction);
 
     final List<LineChartBarData> bars = [];
 
@@ -231,9 +191,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
             show: true,
             applyCutOffY: true,
             cutOffY: startBalance,
-            color: _profitColor.withOpacity(
-              ProfitLossChart.areaOpacity,
-            ),
+            color: _profitColor.withOpacity(ProfitLossChart.areaOpacity),
           ),
         ),
       );
@@ -251,9 +209,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
             show: true,
             applyCutOffY: true,
             cutOffY: startBalance,
-            color: _lossColor.withOpacity(
-              ProfitLossChart.areaOpacity,
-            ),
+            color: _lossColor.withOpacity(ProfitLossChart.areaOpacity),
           ),
         ),
       );
@@ -269,14 +225,10 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, _, __, ___) {
-              final tradePoint = processor.getTradePoint(
-                spot.x.toInt(),
-              );
+              final tradePoint = processor.getTradePoint(spot.x.toInt());
               return FlDotCirclePainter(
                 radius: ProfitLossChart.dotRadius,
-                color: tradePoint.pnl >= 0
-                    ? _profitColor
-                    : _lossColor,
+                color: tradePoint.pnl >= 0 ? _profitColor : _lossColor,
                 strokeColor: Colors.white,
                 strokeWidth: ProfitLossChart.dotStrokeWidth,
               );
@@ -290,10 +242,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
       // Add invisible dummy line to force X-axis and render chart even if empty
       bars.add(
         LineChartBarData(
-          spots: [
-            FlSpot(0, startBalance),
-            FlSpot(extendedMaxX, startBalance),
-          ],
+          spots: [FlSpot(0, startBalance), FlSpot(extendedMaxX, startBalance)],
           isCurved: false,
           color: Colors.transparent,
           barWidth: 0,
@@ -404,10 +353,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Text(
-          'Show last 10 trades only',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('Show last 10 trades only', style: theme.textTheme.bodySmall),
         const SizedBox(width: 8),
         Switch(
           value: _showLastTenTradesOnly,
@@ -421,10 +367,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
     );
   }
 
-  FlTitlesData _buildTitlesData(
-    ThemeData theme,
-    TradeDataProcessor processor,
-  ) {
+  FlTitlesData _buildTitlesData(ThemeData theme, TradeDataProcessor processor) {
     final minY = processor.calculateMinY();
     final maxY = processor.calculateMaxY();
     final tradeCount = processor.tradeCount;
@@ -460,8 +403,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
           getTitlesWidget: (value, meta) {
             final index = value.toInt();
             if (index == 0) return _buildStartLabel(theme);
-            if (index % _calculateXInterval(tradeCount).toInt() !=
-                    0 &&
+            if (index % _calculateXInterval(tradeCount).toInt() != 0 &&
                 index != tradeCount - 1) {
               return const SizedBox();
             }
@@ -470,12 +412,8 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
           },
         ),
       ),
-      rightTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      topTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
     );
   }
 
@@ -494,10 +432,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
         ? _formatYAxisValue(maxY)
         : _formatYAxisValue(minY);
     final textPainter = TextPainter(
-      text: TextSpan(
-        text: longestLabel,
-        style: const TextStyle(fontSize: 10),
-      ),
+      text: TextSpan(text: longestLabel, style: const TextStyle(fontSize: 10)),
       textDirection: TextDirection.ltr,
     )..layout();
     return textPainter.width + 12;
@@ -550,23 +485,16 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
       show: true,
       border: Border(
         left: BorderSide(
-          color: theme.dividerColor.withOpacity(
-            ProfitLossChart.gridOpacity,
-          ),
+          color: theme.dividerColor.withOpacity(ProfitLossChart.gridOpacity),
         ),
         bottom: BorderSide(
-          color: theme.dividerColor.withOpacity(
-            ProfitLossChart.gridOpacity,
-          ),
+          color: theme.dividerColor.withOpacity(ProfitLossChart.gridOpacity),
         ),
       ),
     );
   }
 
-  LineTouchData _buildTouchData(
-    ThemeData theme,
-    TradeDataProcessor processor,
-  ) {
+  LineTouchData _buildTouchData(ThemeData theme, TradeDataProcessor processor) {
     return LineTouchData(
       enabled: true,
       handleBuiltInTouches: true,
@@ -588,9 +516,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
           );
 
           // Get trade data for this spot
-          final tradePoint = processor.getTradePoint(
-            mainSpot.x.toInt(),
-          );
+          final tradePoint = processor.getTradePoint(mainSpot.x.toInt());
 
           // Return tooltips for all spots (one per line)
           return touchedSpots.map((spot) {
@@ -605,9 +531,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
                         'P&L: ${tradePoint.pnl >= 0 ? "+" : ""}\$${tradePoint.pnl.toStringAsFixed(2)}',
 
               TextStyle(
-                color: tradePoint.pnl >= 0
-                    ? _profitColor
-                    : _lossColor,
+                color: tradePoint.pnl >= 0 ? _profitColor : _lossColor,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
@@ -619,10 +543,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
     );
   }
 
-  FlGridData _buildGridData(
-    ThemeData theme,
-    TradeDataProcessor processor,
-  ) {
+  FlGridData _buildGridData(ThemeData theme, TradeDataProcessor processor) {
     final minY = processor.calculateMinY();
     final maxY = processor.calculateMaxY();
 
@@ -631,19 +552,13 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
       drawVerticalLine: false,
       horizontalInterval: _calculateYInterval(minY, maxY),
       getDrawingHorizontalLine: (_) => FlLine(
-        color: theme.dividerColor.withOpacity(
-          ProfitLossChart.gridOpacity,
-        ),
+        color: theme.dividerColor.withOpacity(ProfitLossChart.gridOpacity),
         strokeWidth: 1,
       ),
     );
   }
 
-  Widget _buildLegend(
-    ThemeData theme,
-    double? target,
-    double? maxLoss,
-  ) {
+  Widget _buildLegend(ThemeData theme, double? target, double? maxLoss) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(

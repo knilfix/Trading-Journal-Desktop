@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trading_journal/components/tradesScreen/charts/profit_and_loss.dart';
 import '../../services/account_service.dart';
 import '../../services/trade_service.dart';
 import '../../models/trade.dart';
@@ -11,197 +10,203 @@ class AccountMetricsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeAccount = AccountService.instance.activeAccount;
     final theme = Theme.of(context);
-    final tradeService = Provider.of<TradeService>(context);
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Consumer2<AccountService, TradeService>(
+        builder: (context, accountService, tradeService, child) {
+          final activeAccount = accountService.activeAccount;
+          final trades = tradeService.tradesForActiveAccount;
+          final lastTrade = trades.isNotEmpty ? trades.last : null;
+          final metrics = _calculateMetrics(trades);
 
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        child: StreamBuilder<List<Trade>>(
-          stream: tradeService.tradesStream,
-          builder: (context, snapshot) {
-            final trades = tradeService.getTradesForAccount(
-              activeAccount?.id ?? 0,
-            );
-            final lastTrade = trades.isNotEmpty ? trades.last : null;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Section
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.analytics_outlined,
-                        color: theme.primaryColor,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Performance Dashboard',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Text(
-                            activeAccount?.name ?? 'No Account Selected',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Quick Stats
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: lastTrade?.isWin ?? false
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            lastTrade?.isWin ?? false
-                                ? Icons.trending_up
-                                : Icons.trending_down,
-                            size: 14,
-                            color: lastTrade?.isWin ?? false
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Last Trade: ${lastTrade != null ? (lastTrade.isWin ? "Win" : "Loss") : "N/A"}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: lastTrade?.isWin ?? false
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                Consumer<AccountService>(
-                  builder: (context, accountService, child) {
-                    final activeAccount = accountService.activeAccount;
-                    final activeAccountBalance = activeAccount?.balance ?? 0.0;
-                    debugPrint(
-                      'Account Metrics: Account Balance -> $activeAccountBalance | Account Name: ${activeAccount?.name}',
-                    );
-                    final trades = TradeService.instance.getTradesForAccount(
-                      activeAccount?.id ?? 0,
-                    );
-                    final metrics = _calculateMetrics(trades);
-
-                    return GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: _getGridColumns(context),
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: _getCardAspectRatio(context),
-                      children: [
-                        _buildModernMetricCard(
-                          context,
-                          title: 'Account Balance',
-                          value: '\$${activeAccountBalance.toStringAsFixed(2)}',
-                          icon: Icons.account_balance_wallet_outlined,
-                          color: Colors.blue,
-                          subtitle: 'Current equity',
-                          trend: TrendType.neutral,
-                        ),
-                        _buildModernMetricCard(
-                          context,
-                          title: 'Win Rate',
-                          value: '${metrics['winRate']}%',
-                          icon: Icons.adjust_outlined,
-                          color: Colors.green,
-                          subtitle:
-                              '${trades.where((t) => t.isWin).length}/${trades.length} trades',
-                          trend: _getTrendForWinRate(metrics['winRate']),
-                        ),
-                        _buildModernMetricCard(
-                          context,
-                          title: 'Avg P&L',
-                          value: '\$${metrics['avgPnl']}',
-                          icon: Icons.trending_up_outlined,
-                          color: double.parse(metrics['avgPnl']) >= 0
-                              ? Colors.green
-                              : Colors.red,
-                          subtitle: 'Per trade',
-                          trend: double.parse(metrics['avgPnl']) >= 0
-                              ? TrendType.up
-                              : TrendType.down,
-                        ),
-                        _buildModernMetricCard(
-                          context,
-                          title: 'Total P&L',
-                          value: '\$${metrics['totalPnl']}',
-                          icon: Icons.payments_outlined,
-                          color: double.parse(metrics['totalPnl']) >= 0
-                              ? Colors.green
-                              : Colors.red,
-                          subtitle: 'All trades',
-                          trend: double.parse(metrics['totalPnl']) >= 0
-                              ? TrendType.up
-                              : TrendType.down,
-                        ),
-                        _buildModernMetricCard(
-                          context,
-                          title: 'Win Streak',
-                          value: '${metrics['winStreak']}',
-                          icon: Icons.whatshot_outlined,
-                          color: Colors.orange,
-                          subtitle: 'Best run',
-                          trend: TrendType.neutral,
-                        ),
-                        _buildModernMetricCard(
-                          context,
-                          title: 'Avg Duration',
-                          value: metrics['avgDuration'],
-                          icon: Icons.schedule_outlined,
-                          color: Colors.purple,
-                          subtitle: 'Hold time',
-                          trend: TrendType.neutral,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-                // Performance Chart Section
-                ProfitLossChart(maxTradesToShow: 10),
-              ],
-            );
-          },
-        ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AccountMetricsHeader(
+                theme: theme,
+                activeAccount: activeAccount,
+                lastTrade: lastTrade,
+              ),
+              const SizedBox(height: 32),
+              _AccountMetricsGrid(
+                activeAccountBalance: activeAccount?.balance ?? 0.0,
+                trades: trades,
+                metrics: metrics,
+              ),
+            ],
+          );
+        },
       ),
+    );
+  }
+}
+
+class _AccountMetricsHeader extends StatelessWidget {
+  final ThemeData theme;
+  final dynamic activeAccount;
+  final Trade? lastTrade;
+  const _AccountMetricsHeader({
+    required this.theme,
+    required this.activeAccount,
+    required this.lastTrade,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.analytics_outlined,
+            color: theme.primaryColor,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Performance Dashboard',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                activeAccount?.name ?? 'No Account Selected',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: lastTrade?.isWin ?? false
+                ? Colors.green.withOpacity(0.1)
+                : Colors.red.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                lastTrade?.isWin ?? false
+                    ? Icons.trending_up
+                    : Icons.trending_down,
+                size: 14,
+                color: lastTrade?.isWin ?? false ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Last Trade: ${lastTrade?.isWin == null ? "N/A" : (lastTrade!.isWin ? "Win" : "Loss")}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: lastTrade?.isWin ?? false ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AccountMetricsGrid extends StatelessWidget {
+  final double activeAccountBalance;
+  final List<Trade> trades;
+  final Map<String, dynamic> metrics;
+  const _AccountMetricsGrid({
+    required this.activeAccountBalance,
+    required this.trades,
+    required this.metrics,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: _getGridColumns(context),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: _getCardAspectRatio(context),
+      children: [
+        _buildModernMetricCard(
+          context,
+          title: 'Account Balance',
+          value: activeAccountBalance.toStringAsFixed(2),
+          icon: Icons.account_balance_wallet_outlined,
+          color: Colors.blue,
+          subtitle: 'Current equity',
+          trend: TrendType.neutral,
+        ),
+        _buildModernMetricCard(
+          context,
+          title: 'Win Rate',
+          value: '${metrics['winRate']}%',
+          icon: Icons.adjust_outlined,
+          color: Colors.green,
+          subtitle:
+              '${trades.where((t) => t.isWin).length}/${trades.length} trades',
+          trend: _getTrendForWinRate(metrics['winRate']),
+        ),
+        _buildModernMetricCard(
+          context,
+          title: 'Avg P&L',
+          value: '${metrics['avgPnl']}',
+          icon: Icons.trending_up_outlined,
+          color: double.parse(metrics['avgPnl']) >= 0
+              ? Colors.green
+              : Colors.red,
+          subtitle: 'Per trade',
+          trend: double.parse(metrics['avgPnl']) >= 0
+              ? TrendType.up
+              : TrendType.down,
+        ),
+        _buildModernMetricCard(
+          context,
+          title: 'Total P&L',
+          value: '${metrics['totalPnl']}',
+          icon: Icons.payments_outlined,
+          color: double.parse(metrics['totalPnl']) >= 0
+              ? Colors.green
+              : Colors.red,
+          subtitle: 'All trades',
+          trend: double.parse(metrics['totalPnl']) >= 0
+              ? TrendType.up
+              : TrendType.down,
+        ),
+        _buildModernMetricCard(
+          context,
+          title: 'Win Streak',
+          value: '${metrics['winStreak']}',
+          icon: Icons.whatshot_outlined,
+          color: Colors.orange,
+          subtitle: 'Best run',
+          trend: TrendType.neutral,
+        ),
+        _buildModernMetricCard(
+          context,
+          title: 'Avg Duration',
+          value: metrics['avgDuration'],
+          icon: Icons.schedule_outlined,
+          color: Colors.purple,
+          subtitle: 'Hold time',
+          trend: TrendType.neutral,
+        ),
+      ],
     );
   }
 }

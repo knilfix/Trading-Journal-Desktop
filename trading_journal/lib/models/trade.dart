@@ -23,9 +23,7 @@ class Trade {
     required this.postTradeBalance, // Add to constructor
     this.notes,
     this.attachmentPaths,
-  }) {
-    assert(riskAmount > 0, "Risk amount must be positive");
-  }
+  });
 
   // Update serialization methods
   Map<String, dynamic> toMap() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:trading_journal/screens/calendar/trade_day_modal.dart';
 import 'package:trading_journal/services/account_service.dart';
 import '../../services/trade_service.dart';
 import '../../models/trade.dart';
@@ -24,13 +25,17 @@ class TradeCalendarState extends State<TradeCalendar> {
   }
 
   void _fetchTrades() {
+    final activeAccount = AccountService.instance.activeAccount;
+    if (activeAccount == null) {
+      _tradesByDate = {};
+      setState(() {});
+      return;
+    }
     final tradeService = Provider.of<TradeService>(
       context,
       listen: false,
     );
-    final trades = tradeService.getTradesForAccount(
-      activeAccount!.id,
-    );
+    final trades = tradeService.getTradesForAccount(activeAccount.id);
     _tradesByDate = _groupTradesByDate(trades);
     setState(() {});
   }
@@ -401,9 +406,33 @@ class TradeCalendarState extends State<TradeCalendar> {
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedDay = day;
-        });
+        final trades = _getTradesForDay(day);
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 8,
+
+            content: TradeDayModal(trades: trades, date: day),
+            contentPadding: EdgeInsets.zero,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'Close',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
       },
       child: Container(
         height: 80,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trading_journal/components/user_management_screen.dart';
+import 'package:trading_journal/components/user/user_management_screen.dart';
 import 'package:trading_journal/screens/settings/accounts_settings.dart';
 
 class SettingsScreen extends StatefulWidget {

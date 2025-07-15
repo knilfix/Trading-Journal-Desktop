@@ -80,9 +80,7 @@ class _UserProfileButtonState extends State<UserProfileButton> {
                                 maxHeight: 700,
                               ),
                               margin: const EdgeInsets.all(24),
-                              child: UserProfile(
-                                userId: activeUser?.id,
-                              ),
+                              child: UserProfile(userId: activeUser?.id),
                             ),
                           ),
                         ),
@@ -102,8 +100,9 @@ class _UserProfileButtonState extends State<UserProfileButton> {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: widget.theme.colorScheme.surfaceContainerHighest
-              .withOpacity(0.3),
+          color: widget.theme.colorScheme.surfaceContainerHighest.withOpacity(
+            0.3,
+          ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: widget.theme.colorScheme.outline.withOpacity(0.1),
@@ -111,9 +110,7 @@ class _UserProfileButtonState extends State<UserProfileButton> {
           ),
           boxShadow: [
             BoxShadow(
-              color: widget.theme.colorScheme.shadow.withOpacity(
-                0.05,
-              ),
+              color: widget.theme.colorScheme.shadow.withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -129,130 +126,148 @@ class _UserProfileButtonState extends State<UserProfileButton> {
   Widget _buildUserProfile(User user, ThemeData theme) {
     final initials = getInitials(user.username);
 
-    return widget.isExpanded
-        ? Row(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: theme.colorScheme.primary,
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 2,
-                    right: 2,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: theme.colorScheme.surface,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 14),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      user.username,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Online',
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withOpacity(0.7),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurface.withOpacity(0.3),
-                size: 20,
-              ),
-            ],
-          )
-        : Center(
-            child: Stack(
-              alignment: Alignment.center,
+    return AnimatedCrossFade(
+      duration: const Duration(
+        milliseconds: 180,
+      ), // Sync with Sidebar content animation
+      crossFadeState: widget.isExpanded
+          ? CrossFadeState.showFirst
+          : CrossFadeState.showSecond,
+      firstChild: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ), // Consistent padding
+        child: Row(
+          children: [
+            Stack(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Text(
-                  initials,
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: theme.colorScheme.primary,
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  bottom: 2,
+                  right: 2,
                   child: Container(
-                    width: 7,
-                    height: 7,
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: theme.colorScheme.surface,
-                        width: 1,
+                        width: 2,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          );
+            const SizedBox(width: 14),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    user.username,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Online',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              flex: 0, // Minimal space for chevron
+              child: Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurface.withOpacity(0.3),
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
+      secondChild: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Text(
+                initials,
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.surface,
+                      width: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLoginPrompt(ThemeData theme) {
@@ -261,8 +276,7 @@ class _UserProfileButtonState extends State<UserProfileButton> {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor:
-                    theme.colorScheme.surfaceContainerHighest,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.person_outline,
                   color: theme.colorScheme.onSurfaceVariant,

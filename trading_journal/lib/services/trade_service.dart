@@ -1,37 +1,60 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:trading_journal/models/trade.dart';
 import '../services/account_service.dart';
 
+/// Service for managing trades, including CRUD operations, persistence, and reactive updates for the active account.
 class TradeService extends ChangeNotifier {
+  /// Singleton instance of TradeService.
   static final TradeService instance = TradeService._internal();
-  TradeService._internal();
 
+  /// Private constructor for singleton pattern. Loads trades from storage on initialization.
+  TradeService._internal() {
+    loadFromJson();
+  }
+
+  /// In-memory list of all trades.
   final List<Trade> _trades = [];
+
+  /// The next trade ID to assign.
   int _nextId = 1;
 
-  // Immutable trades - no update/delete methods
+  static const String _tradeFileName = 'trades.json';
+
+  /// Returns an unmodifiable list of all trades.
   List<Trade> get trades => List.unmodifiable(_trades);
 
-  bool _isGeneratingTrades = false;
-  bool get isGeneratingTrades => _isGeneratingTrades;
-  final activeAccount = AccountService.instance.activeAccount;
-
+  /// Stream controller for broadcasting trade list updates.
   final StreamController<List<Trade>> _tradesStream =
       StreamController.broadcast();
+
+  /// Stream of all trades (for reactive UI updates).
   Stream<List<Trade>> get tradesStream => _tradesStream.stream;
 
+  /// Returns the trade with the given ID, or null if not found.
   Trade? getTradeById(int tradeId) {
     try {
       return _trades.firstWhere((trade) => trade.id == tradeId);
     } catch (e) {
-      debugPrint('[TradeService] Trade with ID $tradeId not found');
       return null;
     }
   }
 
+  /// Returns a File handle for the trades.json file in the app's documents directory.
+  Future<File> _getTradeFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final appDir = Directory('${directory.path}/TradingJournal');
+    if (!await appDir.exists()) {
+      await appDir.create(recursive: true);
+    }
+    return File('${appDir.path}/$_tradeFileName');
+  }
+
+  /// Records a new trade for the given account, updates the account balance, and persists the change.
   Future<Trade?> recordTrade({
     required int accountId,
     required CurrencyPair currencyPair,
@@ -42,25 +65,21 @@ class TradeService extends ChangeNotifier {
     required DateTime exitTime,
     String? notes,
   }) async {
-    assert(
-      exitTime.isAfter(entryTime),
-      "Exit time must be after entry time",
-    );
+    assert(exitTime.isAfter(entryTime), "Exit time must be after entry time");
 
     try {
-      final account = AccountService.instance.getAccountById(
-        accountId,
-      );
+      final account = AccountService.instance.getAccountById(accountId);
       if (account == null) {
-        debugPrint("[ERROR] Account $accountId not found");
         return null;
       }
 
       final newBalance = account.balance + pnl;
       assert(newBalance >= 0, "Account balance cannot be negative");
 
-      final updatedAccount = await AccountService.instance
-          .updateAccountBalance(accountId, newBalance);
+      final updatedAccount = await AccountService.instance.updateAccountBalance(
+        accountId,
+        newBalance,
+      );
       if (updatedAccount == null) return null;
 
       final trade = Trade(
@@ -77,76 +96,22 @@ class TradeService extends ChangeNotifier {
       );
 
       _trades.add(trade);
+      await saveToJson();
       _tradesStream.add(_trades);
       notifyListeners();
 
-      _logTradeMetrics(
-        trade,
-        account.balance,
-        accountId,
-      ); // Now called!
       return trade;
-    } catch (e, stackTrace) {
-      debugPrint("[EXCEPTION] Failed to record trade: $e");
-      debugPrint(stackTrace.toString());
+    } catch (e) {
       return null;
     }
   }
 
-  void _logTradeMetrics(
-    Trade trade,
-    double previousBalance,
-    int accountId,
-  ) {
-    // 1. Get the current balance AFTER trade execution
-    final currentBalance =
-        AccountService.instance.getAccountById(accountId)?.balance ??
-        previousBalance; // Fallback to previous if fetch fails
-
-    // 2. Calculate expected new balance
-    final expectedBalance = previousBalance + trade.pnl;
-
-    // 3. Add verification metrics
-    final metrics = {
-      'Trade ID': trade.id,
-      'Pair': trade.currencyPair.symbol,
-      'Direction': trade.direction.toString().split('.').last,
-      'Risk Amount': '\$${trade.riskAmount.toStringAsFixed(2)}',
-      'PnL': '\$${trade.pnl.toStringAsFixed(2)}',
-      'Duration':
-          '${trade.duration.inHours}h ${trade.duration.inMinutes.remainder(60)}m',
-      'Risk:Reward':
-          '1:${trade.riskRewardRatio.abs().toStringAsFixed(2)}',
-      'Previous Balance': '\$${previousBalance.toStringAsFixed(2)}',
-      'Expected Balance': '\$${expectedBalance.toStringAsFixed(2)}',
-      'Current Balance': '\$${currentBalance.toStringAsFixed(2)}',
-      'Balance Match': currentBalance == expectedBalance ? '✅' : '❌',
-      'Account Impact':
-          '${((trade.pnl / previousBalance) * 100).toStringAsFixed(2)}%',
-      'Entry Time': trade.entryTime.toString(),
-      'Exit Time': trade.exitTime.toString(),
-    };
-
-    // 4. Debug output
-    debugPrint("[TRADE METRICS] ================");
-    metrics.forEach((key, value) => debugPrint("$key: $value"));
-    debugPrint("===============================");
-
-    // 5. Explicit warning if mismatch
-    if (currentBalance != expectedBalance) {
-      debugPrint("[WARNING] Balance mismatch detected!");
-      debugPrint("Expected: \$${expectedBalance.toStringAsFixed(2)}");
-      debugPrint("Actual: \$${currentBalance.toStringAsFixed(2)}");
-    }
-  }
-
-  /// Deletes a trade and adjusts the account balance accordingly
+  /// Deletes the trade with the given ID and adjusts the associated account's balance.
   Future<bool> deleteTrade(int tradeId) async {
     try {
       // 1. Find the trade to delete
       final tradeIndex = _trades.indexWhere((t) => t.id == tradeId);
       if (tradeIndex == -1) {
-        debugPrint("[ERROR] Trade $tradeId not found");
         return false;
       }
       final tradeToDelete = _trades[tradeIndex];
@@ -156,7 +121,6 @@ class TradeService extends ChangeNotifier {
         tradeToDelete.accountId,
       );
       if (account == null) {
-        debugPrint("[ERROR] Associated account not found");
         return false;
       }
 
@@ -164,192 +128,69 @@ class TradeService extends ChangeNotifier {
       final newBalance = account.balance - tradeToDelete.pnl;
 
       // 4. Update the account balance
-      final updatedAccount = await AccountService.instance
-          .updateAccountBalance(tradeToDelete.accountId, newBalance);
+      final updatedAccount = await AccountService.instance.updateAccountBalance(
+        tradeToDelete.accountId,
+        newBalance,
+      );
       if (updatedAccount == null) return false;
 
       // 5. Remove the trade
       _trades.removeAt(tradeIndex);
+      await saveToJson();
 
       // 6. Notify listeners and update stream
       _tradesStream.add(_trades);
       notifyListeners();
 
-      debugPrint(
-        "[SUCCESS] Deleted trade $tradeId and adjusted account balance",
-      );
       return true;
-    } catch (e, stackTrace) {
-      debugPrint("[EXCEPTION] Failed to delete trade: $e");
-      debugPrint(stackTrace.toString());
+    } catch (e) {
       return false;
     }
   }
 
+  /// Returns a list of trades for the given account ID.
   List<Trade> getTradesForAccount(int accountId) {
     return _trades.where((t) => t.accountId == accountId).toList();
   }
 
+  /// Removes all trades for the given account ID.
   void clearAccountTrades(int accountId) {
     _trades.removeWhere((trade) => trade.accountId == accountId);
+    saveToJson();
     notifyListeners();
   }
 
-  Future<void> createTestTradesForTestAccount(int accountId) async {
-    if (_isGeneratingTrades) return;
-
-    _isGeneratingTrades = true;
-    notifyListeners();
-
-    try {
-      final account = AccountService.instance.getAccountById(
-        accountId,
-      );
-      if (account == null) {
-        debugPrint('Account $accountId not found');
-        return;
+  /// Loads trades from persistent storage (trades.json).
+  Future<void> loadFromJson() async {
+    final file = await _getTradeFile();
+    if (await file.exists()) {
+      final contents = await file.readAsString();
+      final List<dynamic> jsonList = jsonDecode(contents);
+      _trades.clear();
+      for (var tradeMap in jsonList) {
+        _trades.add(Trade.fromMap(tradeMap));
       }
-
-      if (account.name == 'Testing Account' &&
-          getTradesForAccount(accountId).isEmpty) {
-        final testTrades = await _generateTestTrades(accountId);
-
-        for (final trade in testTrades) {
-          await recordTrade(
-            accountId: accountId,
-            currencyPair: trade.currencyPair,
-            direction: trade.direction,
-            riskAmount: trade.riskAmount,
-            pnl: trade.pnl,
-            entryTime: trade.entryTime,
-            exitTime: trade.exitTime,
-            notes: trade.notes,
-          );
-        }
-
-        debugPrint('Created ${testTrades.length} test trades');
+      if (_trades.isNotEmpty) {
+        _nextId =
+            _trades.map((t) => t.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
       }
-    } catch (e, stackTrace) {
-      debugPrint('Error generating trades: $e');
-      debugPrint(stackTrace.toString());
-    } finally {
-      _isGeneratingTrades = false;
+      _tradesStream.add(_trades);
       notifyListeners();
     }
   }
 
-  Future<void> createDemoTradesForAccount(int accountId) async {
-    if (_isGeneratingTrades) return;
-
-    _isGeneratingTrades = true;
-    notifyListeners();
-
-    try {
-      final account = AccountService.instance.getAccountById(
-        accountId,
-      );
-      if (account == null) return;
-
-      final demoTrades = await _generateTestTrades(accountId);
-
-      for (final trade in demoTrades) {
-        await recordTrade(
-          accountId: accountId,
-          currencyPair: trade.currencyPair,
-          direction: trade.direction,
-          riskAmount: trade.riskAmount,
-          pnl: trade.pnl,
-          entryTime: trade.entryTime,
-          exitTime: trade.exitTime,
-          notes: trade.notes,
-        );
-      }
-      debugPrint('Created ${demoTrades.length} demo trades');
-    } catch (e, stackTrace) {
-      debugPrint('Error generating demo trades: $e');
-      debugPrint(stackTrace.toString());
-    } finally {
-      _isGeneratingTrades = false;
-      notifyListeners();
-    }
+  /// Saves the current list of trades to persistent storage (trades.json).
+  Future<void> saveToJson() async {
+    final file = await _getTradeFile();
+    final tradeList = _trades.map((t) => t.toMap()).toList();
+    final jsonContents = jsonEncode(tradeList);
+    await file.writeAsString(jsonContents);
   }
 
-  Future<List<Trade>> _generateTestTrades(int accountId) async {
-    final random = Random();
-    final account = AccountService.instance.getAccountById(accountId);
-    if (account == null) throw Exception('Account not found');
-
-    double runningBalance = account.balance;
-    final trades = <Trade>[];
-
-    // Strict risk management parameters
-    const riskPercentage = 1.0; // Always risk 1%
-    const fixedRewardRatio = 4.0; // Always target 4:1 RR
-    const winRate = 0.4; // 40% win rate
-
-    // Start from the account's createdAt date, or now if null
-    DateTime entryTime = account.createdAt ?? DateTime.now();
-
-    for (int i = 0; i < 40; i++) {
-      // Skip weekends
-      while (entryTime.weekday == DateTime.saturday ||
-          entryTime.weekday == DateTime.sunday) {
-        entryTime = entryTime.add(const Duration(days: 1));
-      }
-
-      // Calculate fixed risk amount (1% of current balance)
-      final riskAmount = runningBalance * (riskPercentage / 100);
-
-      // Determine trade outcome (win/loss only)
-      final isWin = random.nextDouble() <= winRate;
-
-      // Fixed PnL calculation (4:1 on wins, -1R on losses)
-      final pnl = isWin
-          ? (riskAmount * fixedRewardRatio)
-          : -riskAmount;
-
-      // Update running balance
-      runningBalance += pnl;
-
-      // Trade timing
-      final exitTime = entryTime.add(
-        Duration(hours: 1 + random.nextInt(3)),
-      );
-
-      final trade = Trade(
-        id: _nextId++,
-        accountId: accountId,
-        currencyPair: CurrencyPair
-            .values[random.nextInt(CurrencyPair.values.length)],
-        direction: random.nextBool()
-            ? TradeDirection.buy
-            : TradeDirection.sell,
-        riskAmount: riskAmount,
-        pnl: pnl,
-        postTradeBalance: runningBalance,
-        entryTime: entryTime,
-        exitTime: exitTime,
-        notes:
-            'Test trade ${i + 1}: ${isWin ? "WIN" : "LOSS"} | Fixed RR: $fixedRewardRatio',
-      );
-
-      trades.add(trade);
-
-      // Move to next day (skip weekends in next iteration)
-      entryTime = entryTime.add(const Duration(days: 1));
-
-      // Debug output with risk consistency verification
-      debugPrint('''
-[TRADE ${i + 1}] ${isWin ? "WIN" : "LOSE"}
-Risk: \$${riskAmount.toStringAsFixed(2)} (STRICT $riskPercentage%)
-RR Ratio: $fixedRewardRatio:1
-PnL: \$${pnl.toStringAsFixed(2)}
-Account Impact: ${(riskAmount / runningBalance * 100).toStringAsFixed(2)}% risk
-New Balance: \$${runningBalance.toStringAsFixed(2)}
-===============================
-''');
-    }
-
-    return trades;
+  /// Returns a list of trades for the currently active account.
+  List<Trade> get tradesForActiveAccount {
+    final activeAccountId = AccountService.instance.activeAccount?.id;
+    if (activeAccountId == null) return [];
+    return _trades.where((t) => t.accountId == activeAccountId).toList();
   }
 }
