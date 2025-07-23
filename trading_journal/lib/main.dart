@@ -4,6 +4,7 @@ import 'layouts/main_layout.dart';
 import 'services/user_service.dart';
 import 'services/account_service.dart';
 import 'services/trade_service.dart';
+import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -19,23 +20,28 @@ class TradingJournalApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<UserService>.value(
-          value: UserService.instance,
-        ),
+        ChangeNotifierProvider<UserService>.value(value: UserService.instance),
         ChangeNotifierProvider<AccountService>.value(
           value: AccountService.instance,
         ),
         ChangeNotifierProvider<TradeService>.value(
           value: TradeService.instance,
         ),
+        ChangeNotifierProvider<ThemeService>.value(
+          value: ThemeService.instance,
+        ),
       ],
-      child: MaterialApp(
-        title: 'Trading Journal Pro',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        home: const MainLayout(),
+      child: Consumer<ThemeService>(
+        builder: (context, value, child) {
+          return MaterialApp(
+            title: 'Trading Journal Pro',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: value.themeMode,
+            home: const MainLayout(),
+          );
+        },
       ),
     );
   }

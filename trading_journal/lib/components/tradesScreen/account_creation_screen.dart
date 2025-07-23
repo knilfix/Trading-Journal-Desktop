@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trading_journal/models/account.dart';
 import '../../services/account_service.dart';
-import 'trades_screen.dart';
+import '../../screens/trades_screen.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});

@@ -77,8 +77,8 @@ class _TradeListState extends State<TradeList> {
         child: Text(
           'No trades recorded yet',
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
             color: Colors.grey,
           ),
         ),
@@ -91,11 +91,11 @@ class _TradeListState extends State<TradeList> {
       children: [
         // Account summary header
         Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
             children: [
@@ -125,13 +125,10 @@ class _TradeListState extends State<TradeList> {
                     children: [
                       Text(
                         '${widget.trades.length} ${widget.trades.length == 1 ? 'Trade' : 'Trades'}',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                       Text(
                         'Balance: \$${activeAccount != null ? activeAccount.balance.toStringAsFixed(2) : '--'}',
@@ -201,15 +198,15 @@ class _TradeListState extends State<TradeList> {
         // Trade list
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             itemCount: _sortedTrades.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            separatorBuilder: (context, index) => const SizedBox(height: 4),
             itemBuilder: (context, index) {
               final trade = _sortedTrades[index];
-
               return CompactTradeListItem(
                 trade: trade,
                 balanceAfterTrade: trade.postTradeBalance,
+                initialBalance: widget.initialBalance,
                 isLastItem: index == _sortedTrades.length - 1,
               );
             },
@@ -265,11 +262,13 @@ enum SortOption {
 class CompactTradeListItem extends StatelessWidget {
   final Trade trade;
   final double balanceAfterTrade;
+  final double initialBalance;
   final bool isLastItem;
 
   const CompactTradeListItem({
     required this.trade,
     required this.balanceAfterTrade,
+    required this.initialBalance,
     this.isLastItem = false,
     super.key,
   });
@@ -279,154 +278,144 @@ class CompactTradeListItem extends StatelessWidget {
     final bool isProfit = trade.pnl >= 0;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final balanceColor = balanceAfterTrade > initialBalance
+        ? Colors.green[400]
+        : balanceAfterTrade < initialBalance
+        ? Colors.red[400]
+        : Colors.grey[400];
 
-    return Container(
-      margin: EdgeInsets.only(left: 16, right: 16, bottom: isLastItem ? 16 : 0),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+    return InkWell(
+      borderRadius: BorderRadius.circular(4),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TradeDetailsPage(tradeId: trade.id!),
           ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () {
-          // Navigation to trade details
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TradeDetailsPage(tradeId: trade.id!),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // First row - Pair, direction, date
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: trade.direction == TradeDirection.buy
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      trade.direction.toString().split('.').last.toUpperCase(),
-                      style: TextStyle(
-                        color: trade.direction == TradeDirection.buy
-                            ? Colors.green
-                            : Colors.red,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        margin: EdgeInsets.only(bottom: isLastItem ? 8 : 0),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // First row: Pair, Direction, P&L
+            Row(
+              children: [
+                // Direction icon
+                Icon(
+                  trade.direction == TradeDirection.buy
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward,
+                  size: 16,
+                  color: trade.direction == TradeDirection.buy
+                      ? Colors.green[400]
+                      : Colors.red[400],
+                ),
+                const SizedBox(width: 6),
+                // Currency pair
+                Expanded(
+                  child: Text(
                     trade.currencyPair.symbol,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _formatDate(trade.exitTime),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.textTheme.labelSmall?.color?.withOpacity(
-                        0.6,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Second row - PnL, Risk, R:R
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // PnL indicator
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isProfit
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isProfit ? Icons.arrow_upward : Icons.arrow_downward,
-                          size: 12,
-                          color: isProfit ? Colors.green : Colors.red,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '\$${trade.pnl.abs().toStringAsFixed(2)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: isProfit ? Colors.green : Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Risk amount
-                  Text(
-                    'Risk: \$${trade.riskAmount.toStringAsFixed(2)}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-
-                  // Risk:Reward
-                  Text(
-                    'R:R ${trade.riskRewardRatio.toStringAsFixed(1)}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-
-              // Third row - Duration and balance
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _formatDuration(trade.duration),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.textTheme.labelSmall?.color?.withOpacity(
-                        0.6,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '\$${balanceAfterTrade.toStringAsFixed(2)}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                // P&L
+                Row(
+                  children: [
+                    Icon(
+                      isProfit ? Icons.trending_up : Icons.trending_down,
+                      size: 16,
+                      color: isProfit ? Colors.green[400] : Colors.red[400],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '\$${trade.pnl.abs().toStringAsFixed(2)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isProfit ? Colors.green[400] : Colors.red[400],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            // Second row: Risk, R:R, Duration, Balance
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Risk
+                Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_outlined,
+                      size: 14,
+                      color: Colors.amber[300],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '\$${trade.riskAmount.toStringAsFixed(2)}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.amber[300],
+                      ),
+                    ),
+                  ],
+                ),
+                // R:R
+                Row(
+                  children: [
+                    Icon(Icons.balance, size: 14, color: Colors.blue[300]),
+                    const SizedBox(width: 4),
+                    Text(
+                      trade.riskRewardRatio.toStringAsFixed(1),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.blue[300],
+                      ),
+                    ),
+                  ],
+                ),
+                // Duration
+                Row(
+                  children: [
+                    Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDuration(trade.duration),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                  ],
+                ),
+                // Balance
+                Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 14,
+                      color: balanceColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '\$${balanceAfterTrade.toStringAsFixed(2)}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: balanceColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -442,21 +431,5 @@ class CompactTradeListItem extends StatelessWidget {
     } else {
       return '${duration.inSeconds}s';
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final dateDay = DateTime(date.year, date.month, date.day);
-
-    if (dateDay == today) {
-      return _formatTime(date);
-    } else {
-      return '${date.day}/${date.month} ${_formatTime(date)}';
-    }
-  }
-
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

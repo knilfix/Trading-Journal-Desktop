@@ -14,21 +14,20 @@ class AppTheme {
             surface: const Color(0xFFF8F9FA),
             onSurface: const Color(0xFF2D3748),
           ),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        labelMedium: TextStyle(fontSize: 12),
+        bodyLarge: TextStyle(fontSize: 16),
+      ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 12,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
     );
@@ -48,11 +47,21 @@ class AppTheme {
             onSurface: const Color(0xFFE5E5E7),
           ),
       scaffoldBackgroundColor: const Color(0xFF121212),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        labelMedium: TextStyle(fontSize: 12),
+        bodyLarge: TextStyle(fontSize: 16),
+      ),
       cardTheme: CardThemeData(
-        elevation: 4,
+        elevation: 0,
         color: const Color(0xFF2D2D2D),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
     );

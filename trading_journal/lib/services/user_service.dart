@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/user.dart';
@@ -35,9 +34,6 @@ class UserService extends ChangeNotifier implements PersistableService {
 
   /// The currently active user, or null if none is active.
   User? _activeUser;
-
-  /// The next user ID to assign.
-  int _nextId = 1;
 
   /// Returns the currently active user, or null if none is active.
   User? get activeUser => _activeUser;
@@ -183,11 +179,6 @@ class UserService extends ChangeNotifier implements PersistableService {
       // Restore active user
       final activeUser = _users.where((u) => u.isActive).toList();
       _activeUser = activeUser.isNotEmpty ? activeUser.first : null;
-
-      if (_users.isNotEmpty) {
-        _nextId =
-            _users.map((u) => u.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
-      }
 
       notifyListeners();
     }

@@ -1,23 +1,130 @@
 import 'package:flutter/material.dart';
-import 'package:trading_journal/components/under_construction.dart';
+import '../services/account_service.dart';
+import '../components/tradesScreen/add_trade.dart';
+import '../components/tradesScreen/trades_tab_view.dart';
+import '../components/tradesScreen/charts/profit_and_loss.dart';
 
-class TradesScreen extends StatelessWidget {
+class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final String name = 'Trading History';
-    final String displayMessage = 'Trade logs and history tracking ';
-    final Icon icon = Icon(
-      Icons.show_chart,
-      size: 64,
-      color: Colors.grey,
-    );
+  State<TradesScreen> createState() => _TradesScreenState();
+}
 
-    return UnderConstructionScreen(
-      pageName: name,
-      message: displayMessage,
-      pageIcon: icon,
+class _TradesScreenState extends State<TradesScreen> {
+  int _selectedIndex = 0;
+
+  @override
+  @override
+  Widget build(BuildContext context) {
+    final activeAccount = AccountService.instance.activeAccount;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.light
+          ? Colors
+                .white // Whitish background in light mode
+          : Theme.of(context).colorScheme.surface, // Dark surface in dark mode
+      body: activeAccount == null
+          ? const Center(
+              child: Text(
+                'No active account selected',
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          : Column(
+              children: [
+                // Segmented Button for View Selection
+                Padding(
+                  padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                  child: SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment<int>(
+                        value: 0,
+                        icon: Icon(Icons.dashboard_outlined),
+                        label: Text('Trade Entry'),
+                      ),
+                      ButtonSegment<int>(
+                        value: 1,
+                        icon: Icon(Icons.list_alt),
+                        label: Text('All Trades'),
+                      ),
+                    ],
+                    selected: {_selectedIndex},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        _selectedIndex = newSelection.first;
+                      });
+                    },
+                    style: SegmentedButton.styleFrom(
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surface, // Adaptive background
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface, // Adaptive text/icon color
+                      selectedForegroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onPrimary, // White text on selected
+                      selectedBackgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary, // Adaptive selected color
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(context).dividerColor.withOpacity(0.3),
+                        width: 1,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                // Content
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _selectedIndex == 0
+                        ? _buildTradeEntryView()
+                        : _buildAllTradesView(activeAccount.id),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTradeEntryView() {
+    return Row(
+      key: const ValueKey('trade_entry'),
+      children: [
+        // Left Panel - Trade Entry (25%)
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.25,
+          child: const AddTradeScreen(width: 0.25),
+        ),
+        const VerticalDivider(width: 1, thickness: 1, color: Colors.grey),
+        // Right Panel - Performance Chart (75%)
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: const ProfitLossChart(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAllTradesView(int accountId) {
+    return Container(
+      key: const ValueKey('trades'),
+      child: TradesTabView(accountId: accountId),
     );
   }
 }

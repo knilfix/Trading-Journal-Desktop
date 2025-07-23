@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:trading_journal/components/user/user_management_screen.dart';
 import 'package:trading_journal/screens/settings/accounts_settings.dart';
+import 'package:trading_journal/screens/settings/appearance_settings.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() =>
-      _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
@@ -32,9 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsMenuItem(
       icon: Icons.palette_outlined,
       label: 'Appearance',
-      screen: const Center(
-        child: Text('Appearance Settings'),
-      ),
+      screen: const Center(child: AppearanceSettings()),
     ),
     SettingsMenuItem(
       icon: Icons.info_outline,
@@ -54,25 +52,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 250,
           decoration: BoxDecoration(
             border: Border(
-              right: BorderSide(
-                color: theme.dividerColor.withOpacity(0.1),
-              ),
+              right: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
             ),
           ),
           child: ListView.builder(
             itemCount: _menuItems.length,
-            padding: const EdgeInsets.symmetric(
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemBuilder: (context, index) {
               final item = _menuItems[index];
               final isSelected = _selectedIndex == index;
 
               return Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -89,18 +80,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? theme.colorScheme.primary
-                                  .withOpacity(0.1)
+                            ? theme.colorScheme.primary.withOpacity(0.1)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(
-                          8,
-                        ),
+                        borderRadius: BorderRadius.circular(8),
                         border: isSelected
                             ? Border.all(
-                                color: theme
-                                    .colorScheme
-                                    .primary
-                                    .withOpacity(0.2),
+                                color: theme.colorScheme.primary.withOpacity(
+                                  0.2,
+                                ),
                               )
                             : null,
                       ),
@@ -111,29 +98,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             size: 20,
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.7),
+                                : theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
                           const SizedBox(width: 12),
                           Text(
                             item.label,
-                            style: theme
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: isSelected
-                                      ? theme
-                                            .colorScheme
-                                            .primary
-                                      : theme
-                                            .colorScheme
-                                            .onSurface,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
                           ),
                         ],
                       ),

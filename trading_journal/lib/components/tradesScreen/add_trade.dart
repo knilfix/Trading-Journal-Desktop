@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:trading_journal/services/account_service.dart';
-import '../../models/trade.dart';
-import '../../services/trade_service.dart';
-import '../../models/account.dart';
-import 'package:trading_journal/components/tradesScreen/charts/profit_and_loss.dart';
+import 'package:trading_journal/models/trade.dart';
+
+import 'package:trading_journal/services/trade_service.dart';
+import 'package:trading_journal/components/tradesScreen/add_trade/modern_text_field.dart';
+import 'package:trading_journal/components/tradesScreen/add_trade/modern_dropdown.dart';
+import 'package:trading_journal/components/tradesScreen/add_trade/modern_date_time_picker.dart';
 
 class AddTradeScreen extends StatefulWidget {
-  const AddTradeScreen({super.key});
+  final double width;
+  const AddTradeScreen({super.key, this.width = 0.25});
 
   @override
   State<AddTradeScreen> createState() => _AddTradeScreenState();
@@ -14,49 +17,121 @@ class AddTradeScreen extends StatefulWidget {
 
 class _AddTradeScreenState extends State<AddTradeScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  final _pairController = TextEditingController();
   final _riskController = TextEditingController();
   final _pnlController = TextEditingController();
   final _notesController = TextEditingController();
+  final _riskPercentageController = TextEditingController();
 
   DateTime _entryTime = DateTime.now();
   DateTime _exitTime = DateTime.now();
   TradeDirection _direction = TradeDirection.buy;
   CurrencyPair? _selectedCurrencyPair;
+  CurrencyPair? _lastSelectedCurrencyPair;
+  TradeDirection _lastDirection = TradeDirection.buy;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final activeAccount = AccountService.instance.activeAccount;
+    if (activeAccount != null) {
+      final lastPercentage =
+          double.tryParse(_riskPercentageController.text) ??
+          1.0; // Default to 1.0% if null
+      final newRiskAmount = activeAccount.balance * (lastPercentage / 100);
+      setState(() {
+        _riskController.text = newRiskAmount.toStringAsFixed(2);
+      });
+    } else {
+      setState(() {
+        _riskController.text = '0.00'; // Default if no account
+      });
+    }
+  }
 
   @override
   void dispose() {
-    _pairController.dispose();
     _riskController.dispose();
     _pnlController.dispose();
     _notesController.dispose();
+    _riskPercentageController.dispose();
     super.dispose();
+  }
+
+  void _showRiskModal() {
+    final activeAccount = AccountService.instance.activeAccount;
+    if (activeAccount == null) {
+      _showError('No active account selected.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Set Risk Percentage'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _riskPercentageController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Percentage (%)',
+                  hintText: 'e.g., 1.0',
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Balance: \$${activeAccount.balance.toStringAsFixed(2)}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final percentage = double.tryParse(
+                  _riskPercentageController.text,
+                );
+                if (percentage == null || percentage <= 0 || percentage > 100) {
+                  _showError('Please enter a valid percentage (0-100).');
+                  return;
+                }
+                final riskAmount = activeAccount.balance * (percentage / 100);
+                setState(() {
+                  _riskController.text = riskAmount.toStringAsFixed(2);
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Set'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Left: Trade Entry Form
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.35,
-          child: _buildTradeEntryForm(context),
-        ),
-        // Right: Performance Chart
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: ProfitLossChart(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTradeEntryForm(BuildContext context) {
     return Container(
+      width: (MediaQuery.of(context).size.width * widget.width).clamp(200, 400),
+
       decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.white
+            : Theme.of(context).colorScheme.surface,
         border: Border(
           right: BorderSide(
             color: Theme.of(context).dividerColor.withAlpha(25),
@@ -72,9 +147,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(
-                    context,
-                  ).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                   width: 1,
                 ),
               ),
@@ -89,8 +162,14 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                 const SizedBox(width: 12),
                 Text(
                   'New Trade',
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style:
+                      Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ) ??
+                      const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ],
             ),
@@ -107,9 +186,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                     // Trade Setup Section
                     _buildSectionHeader('Trade Setup'),
                     const SizedBox(height: 16),
-
-                    // Currency Pair with modern styling
-                    _buildModernDropdown<CurrencyPair>(
+                    ModernDropDown<CurrencyPair>(
                       label: 'Currency Pair',
                       value: _selectedCurrencyPair,
                       icon: Icons.currency_exchange,
@@ -118,15 +195,14 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                           value: pair,
                           child: Text(
                             pair.symbol,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                         );
                       }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedCurrencyPair = value;
+                          if (value != null) _lastSelectedCurrencyPair = value;
                         });
                       },
                       validator: (value) => value == null
@@ -134,101 +210,94 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                           : null,
                     ),
                     const SizedBox(height: 20),
-
-                    // Direction with enhanced styling
-                    _buildModernDropdown<TradeDirection>(
-                      label: 'Direction',
-                      value: _direction,
-                      icon: _direction == TradeDirection.buy
-                          ? Icons.trending_up
-                          : Icons.trending_down,
-                      iconColor: _direction == TradeDirection.buy
-                          ? Colors.green
-                          : Colors.red,
-                      items: TradeDirection.values.map((direction) {
+                    _buildSectionHeader('Direction'),
+                    const SizedBox(height: 16),
+                    SegmentedButton<TradeDirection>(
+                      segments: TradeDirection.values.map((direction) {
                         final isBuy = direction == TradeDirection.buy;
-                        return DropdownMenuItem(
+                        return ButtonSegment<TradeDirection>(
                           value: direction,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isBuy
-                                    ? Icons.trending_up
-                                    : Icons.trending_down,
-                                size: 16,
-                                color: isBuy
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                direction
-                                    .toString()
-                                    .split('.')
-                                    .last
-                                    .toUpperCase(),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: isBuy
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                              ),
-                            ],
+                          icon: Icon(
+                            isBuy ? Icons.trending_up : Icons.trending_down,
+                            size: 48,
+                            color: isBuy ? Colors.green : Colors.red,
+                          ),
+                          label: Text(
+                            direction.toString().split('.').last.toUpperCase(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: isBuy ? Colors.green : Colors.red,
+                            ),
                           ),
                         );
                       }).toList(),
-                      onChanged: (value) =>
-                          setState(() => _direction = value!),
+                      selected: {_direction},
+                      onSelectionChanged: (newSelection) {
+                        setState(() {
+                          _direction = newSelection.first;
+                          _lastDirection = newSelection.first;
+                        });
+                      },
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith((
+                          states,
+                        ) {
+                          if (states.contains(WidgetState.selected)) {
+                            return Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.1);
+                          }
+                          return Theme.of(context).colorScheme.surface;
+                        }),
+                        foregroundColor: WidgetStateProperty.all(
+                          Theme.of(context).colorScheme.onSurface,
+                        ),
+                        shape: WidgetStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 32),
-
                     // Money Management Section
                     _buildSectionHeader('Money Management'),
                     const SizedBox(height: 16),
-
-                    // Risk and PnL with modern cards
                     Row(
                       children: [
                         Expanded(
-                          child: _buildModernTextField(
+                          child: ModernTextField(
                             controller: _riskController,
                             label: 'Risk Amount',
                             prefix: '\$',
                             icon: Icons.warning_amber_outlined,
                             iconColor: Colors.orange,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'Required';
-                              }
+                              if (value?.isEmpty ?? true) return 'Required';
                               if (double.tryParse(value!) == null) {
                                 return 'Invalid number';
                               }
                               return null;
                             },
+                            onIconTap: _showRiskModal,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: _buildModernTextField(
+                          child: ModernTextField(
                             controller: _pnlController,
                             label: 'P&L',
                             prefix: '\$',
-                            icon:
-                                Icons.account_balance_wallet_outlined,
+                            icon: Icons.account_balance_wallet_outlined,
                             iconColor: Colors.blue,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'Required';
-                              }
+                              if (value?.isEmpty ?? true) return 'Required';
                               if (double.tryParse(value!) == null) {
                                 return 'Invalid number';
                               }
@@ -239,56 +308,50 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                       ],
                     ),
                     const SizedBox(height: 32),
-
                     // Timing Section
                     _buildSectionHeader('Timing'),
                     const SizedBox(height: 16),
-
-                    // Enhanced Date/Time Pickers
-                    _ModernDateTimePicker(
+                    ModernDateTimePicker(
                       label: 'Entry Time',
                       dateTime: _entryTime,
                       icon: Icons.login_outlined,
                       iconColor: Colors.green,
-                      onChanged: (dt) =>
-                          setState(() => _entryTime = dt),
+                      onChanged: (dt) => setState(() {
+                        _entryTime = dt;
+                        _exitTime = dt;
+                      }),
                     ),
                     const SizedBox(height: 16),
-                    _ModernDateTimePicker(
+                    ModernDateTimePicker(
                       label: 'Exit Time',
                       dateTime: _exitTime,
                       icon: Icons.logout_outlined,
                       iconColor: Colors.red,
-                      onChanged: (dt) =>
-                          setState(() => _exitTime = dt),
+                      onChanged: (dt) => setState(() => _exitTime = dt),
                     ),
                     const SizedBox(height: 32),
-
                     // Notes Section
                     _buildSectionHeader('Notes'),
                     const SizedBox(height: 16),
-                    _buildModernTextField(
+                    ModernTextField(
                       controller: _notesController,
                       label: 'Trade Notes (Optional)',
                       icon: Icons.note_outlined,
                       maxLines: 3,
-                      hintText:
-                          'Add any observations or strategy notes...',
+                      hintText: 'Add any observations or strategy notes...',
                     ),
                   ],
                 ),
               ),
             ),
           ),
-          // Modern Submit Button
+          // Submit Button
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: Theme.of(
-                    context,
-                  ).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                   width: 1,
                 ),
               ),
@@ -301,10 +364,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                 icon: const Icon(Icons.save_outlined),
                 label: const Text(
                   'Record Trade',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   elevation: 0,
@@ -323,219 +383,121 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.primary,
-      ),
+      style:
+          Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.primary,
+          ) ??
+          TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.primary,
+          ),
     );
-  }
-
-  Widget _buildModernTextField({
-    required TextEditingController controller,
-    required String label,
-    String? prefix,
-    String? hintText,
-    IconData? icon,
-    Color? iconColor,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        prefixText: prefix,
-        prefixIcon: icon != null
-            ? Icon(icon, size: 20, color: iconColor)
-            : null,
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModernDropdown<T>({
-    required String label,
-    required T? value,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    IconData? icon,
-    Color? iconColor,
-    String? Function(T?)? validator,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items,
-      onChanged: onChanged,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: icon != null
-            ? Icon(icon, size: 20, color: iconColor)
-            : null,
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 2,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-      ),
-      dropdownColor: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(12),
-    );
-  }
-
-  void _resetForm({bool keepCurrencyPair = true}) {
-    if (!mounted) return;
-
-    setState(() {
-      _formKey.currentState?.reset();
-      _riskController.clear();
-      _pnlController.clear();
-      _notesController.clear();
-      _direction = TradeDirection.buy;
-      _entryTime = DateTime.now();
-      _exitTime = DateTime.now();
-
-      // Only keep currency pair if explicitly requested
-      if (!keepCurrencyPair) {
-        _selectedCurrencyPair = null;
-      }
-    });
   }
 
   Future<void> _submitTrade() async {
-    debugPrint('[DEBUG] Submit Trade initiated'); // Debug 1
+    debugPrint('[DEBUG] Submit Trade initiated');
 
     final activeAccount = AccountService.instance.activeAccount;
 
-    debugPrint(
-      '[DEBUG] Active Account: ${activeAccount?.id ?? "NULL"}',
-    ); // Debug 2
+    debugPrint('[DEBUG] Active Account: ${activeAccount?.id ?? "NULL"}');
 
     if (activeAccount == null) {
-      debugPrint(
-        '[DEBUG] No active account - showing error',
-      ); // Debug 3
+      debugPrint('[DEBUG] No active account - showing error');
       _showError('No active account selected.');
       return;
     }
 
     if (_selectedCurrencyPair == null) {
-      debugPrint(
-        '[DEBUG] No currency pair selected - showing error',
-      ); // Debug 4
+      debugPrint('[DEBUG] No currency pair selected - showing error');
       _showError('Please select a currency pair');
       return;
     }
 
     if (!_formKey.currentState!.validate()) {
-      debugPrint('[DEBUG] Form validation failed'); // Debug 5
+      debugPrint('[DEBUG] Form validation failed');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix the errors in the form')),
+      );
       return;
     }
 
     try {
-      debugPrint(
-        '[DEBUG] Attempting to record trade with data:',
-      ); // Debug 6
+      debugPrint('[DEBUG] Attempting to record trade with data:');
       debugPrint('  - Account: ${activeAccount.id}');
       debugPrint('  - Pair: ${_selectedCurrencyPair!.symbol}');
       debugPrint('  - Risk: ${_riskController.text}');
       debugPrint('  - PnL: ${_pnlController.text}');
+      debugPrint('  - Entry Time: $_entryTime');
 
+      final riskAmount = double.parse(_riskController.text);
+      final pnl = double.parse(_pnlController.text);
       final trade = await TradeService.instance.recordTrade(
         accountId: activeAccount.id,
         currencyPair: _selectedCurrencyPair!,
         direction: _direction,
-        riskAmount: double.parse(_riskController.text),
-        pnl: double.parse(_pnlController.text),
+        riskAmount: riskAmount,
+        pnl: pnl,
         entryTime: _entryTime,
         exitTime: _exitTime,
         notes: _notesController.text,
       );
-
       if (trade != null) {
-        debugPrint(
-          '[DEBUG] Trade recorded successfully: ${trade.id}',
-        ); // Debug 7
+        debugPrint('[DEBUG] Trade recorded successfully: ${trade.id}');
+        // Update account balance based on trade outcome
+        final newBalance = activeAccount.balance + pnl - riskAmount;
+        AccountService.instance.updateAccountBalance(
+          activeAccount.id,
+          newBalance,
+        );
+
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Trade recorded!')));
-        // Reset the form
+        ).showSnackBar(const SnackBar(content: Text('Trade recorded!')));
         if (mounted) {
-          final isBacktesting =
-              AccountService.instance.activeAccount?.accountType ==
-              AccountType.backtesting;
-
-          _resetForm(keepCurrencyPair: isBacktesting);
+          _resetForm();
         }
         if (!mounted) {
-          debugPrint(
-            '[WARNING] Widget not mounted after successful trade',
-          ); // Debug 8
+          debugPrint('[WARNING] Widget not mounted after successful trade');
           return;
         }
       } else {
-        debugPrint('[ERROR] TradeService returned null'); // Debug 9
+        debugPrint('[ERROR] TradeService returned null');
         if (!mounted) return;
         _showError('Failed to record trade');
       }
     } catch (e, stackTrace) {
-      debugPrint('[EXCEPTION] Error recording trade: $e'); // Debug 10
+      debugPrint('[EXCEPTION] Error recording trade: $e');
       debugPrint(stackTrace.toString());
       _showError('Error: ${e.toString()}');
     }
+  }
+
+  void _resetForm() {
+    if (!mounted) return;
+
+    final activeAccount = AccountService.instance.activeAccount;
+    if (activeAccount != null) {
+      //recalculate risk based on last percentage..default is 1%
+      final lastPercentage =
+          double.tryParse(_riskPercentageController.text) ?? 1.0;
+      final newRiskAmount = activeAccount.balance * lastPercentage / 100.0;
+      _riskController.text = newRiskAmount.toStringAsFixed(2);
+      _riskPercentageController.clear();
+    }
+
+    setState(() {
+      _formKey.currentState?.reset();
+      _pnlController.clear();
+      _notesController.clear();
+      _direction = _lastDirection; // Persist last direction
+      _entryTime = DateTime.now();
+      _exitTime = DateTime.now();
+      _selectedCurrencyPair =
+          _lastSelectedCurrencyPair ??
+          _selectedCurrencyPair; // Persist last pair
+    });
   }
 
   void _showError(String message) {
@@ -549,141 +511,8 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
           ],
         ),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
-}
-
-// Enhanced date/time picker widget
-class _ModernDateTimePicker extends StatelessWidget {
-  final String label;
-  final DateTime dateTime;
-  final Function(DateTime) onChanged;
-  final IconData? icon;
-  final Color? iconColor;
-
-  const _ModernDateTimePicker({
-    required this.label,
-    required this.dateTime,
-    required this.onChanged,
-    this.icon,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        final picked = await showDateTimePicker(context, dateTime);
-        if (picked != null) onChanged(picked);
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon!, size: 20, color: iconColor),
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.labelMedium
-                        ?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        '${dateTime.day}/${dateTime.month}/${dateTime.year}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 18,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-Future<DateTime?> showDateTimePicker(
-  BuildContext context,
-  DateTime initialDate,
-) async {
-  final date = await showDatePicker(
-    context: context,
-    initialDate: initialDate,
-    firstDate: DateTime(2000),
-    lastDate: DateTime.now(),
-  );
-
-  if (date == null) return null;
-
-  final time = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.fromDateTime(initialDate),
-  );
-
-  if (time == null) return null;
-
-  return DateTime(
-    date.year,
-    date.month,
-    date.day,
-    time.hour,
-    time.minute,
-  );
 }
