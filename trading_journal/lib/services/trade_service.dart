@@ -153,6 +153,11 @@ class TradeService extends ChangeNotifier {
     return _trades.where((t) => t.accountId == accountId).toList();
   }
 
+  /// Async version of getTradesForAccount for FutureBuilder usage
+  Future<List<Trade>> getTradesForAccountAsync(int accountId) async {
+    return getTradesForAccount(accountId); // Just wraps the synchronous version
+  }
+
   /// Removes all trades for the given account ID.
   void clearAccountTrades(int accountId) {
     _trades.removeWhere((trade) => trade.accountId == accountId);

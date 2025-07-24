@@ -88,6 +88,18 @@ class Account {
       isActive: map['is_active'] ?? false, // Add this with default false
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Account &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          target == other.target &&
+          maxLoss == other.maxLoss);
+
+  @override
+  int get hashCode => id.hashCode ^ target.hashCode ^ maxLoss.hashCode;
 }
 
 enum AccountType {
