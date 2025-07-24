@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/account_service.dart';
-import '../components/tradesScreen/add_trade.dart';
+import '../components/tradesScreen/add_trade/add_trade.dart';
 import '../components/tradesScreen/trades_tab_view.dart';
 import '../components/tradesScreen/charts/profit_and_loss.dart';
+import '../components/tradesScreen/add_trade/trade_submission_controller.dart';
 
 class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});
@@ -106,10 +107,13 @@ class _TradesScreenState extends State<TradesScreen> {
       children: [
         // Left Panel - Trade Entry (25%)
         SizedBox(
-          width: MediaQuery.of(context).size.width * 0.25,
-          child: const AddTradeScreen(width: 0.25),
+          width: MediaQuery.of(context).size.width * 0.35,
+          child: AddTradeScreen(
+            width: 0.35,
+            controller: TradeSubmissionController(),
+          ),
         ),
-        const VerticalDivider(width: 1, thickness: 1, color: Colors.grey),
+
         // Right Panel - Performance Chart (75%)
         Expanded(
           child: Padding(

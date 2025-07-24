@@ -6,7 +6,7 @@ import '../models/navigation_item.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/portfolio_screen.dart';
-import '../components/tradesScreen/account_selection_screen.dart';
+import '../components/accounts/account_selection_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -17,7 +17,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
-  bool _isExpanded = true;
+  bool _isExpanded = false;
 
   final List<NavigationItem> _navigationItems = [
     NavigationItem(

@@ -26,9 +26,6 @@ class UserService extends ChangeNotifier implements PersistableService {
     }
   }
 
-  /// Artificial delay for simulating async operations (e.g., for testing/demo).
-  final int delayDuration = 100;
-
   /// In-memory list of all users.
   final List<User> _users = [];
 
@@ -97,8 +94,6 @@ class UserService extends ChangeNotifier implements PersistableService {
     required String password,
     required String username,
   }) async {
-    await Future.delayed(Duration(milliseconds: delayDuration));
-
     if (_users.any((user) => user.username == username)) {
       throw Exception('Username already taken');
     }
@@ -118,13 +113,11 @@ class UserService extends ChangeNotifier implements PersistableService {
 
   /// Returns a list of all users (async).
   Future<List<User>> getAllUsers() async {
-    await Future.delayed(Duration(milliseconds: delayDuration));
     return List.unmodifiable(_users);
   }
 
   /// Returns the user with the given ID, or throws if not found.
   Future<User?> getUserById(int id) async {
-    await Future.delayed(Duration(milliseconds: delayDuration));
     return _users.firstWhere(
       (user) => user.id == id,
       orElse: () => throw Exception('User not found'),

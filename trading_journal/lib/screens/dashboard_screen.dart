@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trading_journal/components/tradesScreen/account_metrics.dart';
+import 'package:trading_journal/components/accounts/account_metrics.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});

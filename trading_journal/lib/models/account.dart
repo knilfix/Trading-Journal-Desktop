@@ -8,6 +8,7 @@ class Account {
   final DateTime? createdAt;
   final double? target;
   final double? maxLoss;
+  final bool isActive;
 
   Account({
     required this.id,
@@ -19,6 +20,7 @@ class Account {
     this.createdAt,
     this.target,
     this.maxLoss,
+    this.isActive = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -28,11 +30,11 @@ class Account {
       'name': name,
       'balance': balance,
       'start_balance': startBalance,
-      'account_type': accountType.name, // Store enum as string
-      'created_at': createdAt
-          ?.toIso8601String(), // Store as ISO string
+      'account_type': accountType.name,
+      'created_at': createdAt?.toIso8601String(),
       'target': target,
       'maxLoss': maxLoss,
+      'is_active': isActive, // Add this
     };
   }
 
@@ -42,10 +44,11 @@ class Account {
     String? name,
     double? balance,
     double? startBalance,
-    AccountType? accountType, // Updated type
+    AccountType? accountType,
     DateTime? createdAt,
     double? target,
     double? maxLoss,
+    bool? isActive, // Add this parameter
   }) {
     return Account(
       id: id ?? this.id,
@@ -57,6 +60,8 @@ class Account {
       createdAt: createdAt ?? this.createdAt,
       target: target ?? this.target,
       maxLoss: maxLoss ?? this.maxLoss,
+      isActive:
+          isActive ?? this.isActive, // Include this in the constructor call
     );
   }
 
@@ -75,9 +80,8 @@ class Account {
           ? DateTime.tryParse(map['created_at'])
           : null,
       target: map['target'] != null ? map['target'] as double : null,
-      maxLoss: map['maxLoss'] != null
-          ? map['maxLoss'] as double
-          : null,
+      maxLoss: map['maxLoss'] != null ? map['maxLoss'] as double : null,
+      isActive: map['is_active'] ?? false, // Add this with default false
     );
   }
 }

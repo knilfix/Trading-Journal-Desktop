@@ -41,22 +41,46 @@ class AccountService extends ChangeNotifier {
 
   /// Called when the active user changes. Clears the active account and notifies listeners.
   void _onUserChanged() {
+    // Deactivate all accounts when user changes
+    for (int i = 0; i < _accounts.length; i++) {
+      if (_accounts[i].isActive) {
+        _accounts[i] = _accounts[i].copyWith(isActive: false);
+      }
+    }
     _activeAccount = null;
     _updateListeners();
-    // Notify TradeService to update listeners as well
     TradeService.instance.notifyListeners();
   }
 
   /// Sets the account with the given ID as the active account.
   Future<void> setActiveAccount(int accountId) async {
-    final account = getAccountById(accountId);
-    if (account != null) {
-      _activeAccount = account;
-      notifyListeners();
-      debugPrint('Active account set to: ${account.name}');
-    } else {
-      throw Exception('Account not found');
+    // First verify we have an active user
+    if (activeUser == null) {
+      throw StateError('Cannot set active account without an active user');
     }
+
+    // Find the account and verify ownership
+    final accountIndex = _accounts.indexWhere(
+      (a) => a.id == accountId && a.userId == activeUser!.id,
+    );
+
+    if (accountIndex == -1) {
+      throw StateError('Account not found or not owned by current user');
+    }
+
+    // Deactivate all accounts (including those from other users)
+    for (int i = 0; i < _accounts.length; i++) {
+      if (_accounts[i].isActive) {
+        _accounts[i] = _accounts[i].copyWith(isActive: false);
+      }
+    }
+
+    // Activate the selected account
+    _accounts[accountIndex] = _accounts[accountIndex].copyWith(isActive: true);
+    _activeAccount = _accounts[accountIndex];
+
+    await saveToJson();
+    notifyListeners();
   }
 
   /// Clears the active account and notifies listeners.
@@ -190,6 +214,7 @@ class AccountService extends ChangeNotifier {
   /// Updates the balance for the account with the given ID.
   Future<Account?> updateAccountBalance(int id, double newBalance) async {
     if (newBalance < 0) {
+      debugPrint('Cannot update account $id: Negative balance $newBalance');
       return null;
     }
 
@@ -198,15 +223,17 @@ class AccountService extends ChangeNotifier {
     );
 
     if (accountIndex == -1) {
+      debugPrint('Account $id not found for user ${activeUser?.id}');
       return null;
     }
 
-    // Update in accounts list
+    debugPrint(
+      'Updating account $id: Old Balance=${_accounts[accountIndex].balance}, New Balance=$newBalance',
+    );
     _accounts[accountIndex] = _accounts[accountIndex].copyWith(
       balance: newBalance,
     );
 
-    // Update active account if this is the active account
     if (_activeAccount?.id == id) {
       _activeAccount = _accounts[accountIndex];
     }
@@ -241,9 +268,21 @@ class AccountService extends ChangeNotifier {
       final contents = await file.readAsString();
       final List<dynamic> jsonList = jsonDecode(contents);
       _accounts.clear();
+
       for (var accountMap in jsonList) {
-        _accounts.add(Account.fromMap(accountMap));
+        final account = Account.fromMap(accountMap);
+        _accounts.add(account);
+
+        // Only consider account active if it belongs to current user
+        if (account.isActive && activeUser?.id == account.userId) {
+          _activeAccount = account;
+        } else if (account.isActive) {
+          // Deactivate accounts that don't belong to current user
+          final index = _accounts.length - 1;
+          _accounts[index] = _accounts[index].copyWith(isActive: false);
+        }
       }
+
       if (_accounts.isNotEmpty) {
         _nextId =
             _accounts.map((a) => a.id).reduce((a, b) => a > b ? a : b) + 1;
