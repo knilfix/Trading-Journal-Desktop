@@ -29,7 +29,15 @@ class AccountService extends ChangeNotifier {
 
   /// The currently active account, or null if none is active.
   Account? _activeAccount;
-  Account? get activeAccount => _activeAccount;
+  Account? get activeAccount {
+    try {
+      return _accounts.firstWhere(
+        (a) => a.id == _activeAccount?.id && a.userId == activeUser?.id,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 
   static const String _accountFileName = 'accounts.json';
 
@@ -92,6 +100,7 @@ class AccountService extends ChangeNotifier {
 
   /// Updates listeners and the accountsListenable notifier with accounts for the active user.
   void _updateListeners() {
+    debugPrint("_updateListeners() called"); // Debug
     accountsListenable.value = List.unmodifiable(
       _accounts.where((a) => a.userId == activeUser?.id),
     );
@@ -200,12 +209,20 @@ class AccountService extends ChangeNotifier {
       (account) => account.id == id && account.userId == activeUser?.id,
     );
     if (accountIndex == -1) return null;
-    final oldAccount = _accounts[accountIndex];
-    final updatedAccount = oldAccount.copyWith(
+
+    // Create new account instance
+    final updatedAccount = _accounts[accountIndex].copyWith(
       target: target,
       maxLoss: maxLoss,
     );
+
+    // Update in-place (since _accounts is now mutable)
     _accounts[accountIndex] = updatedAccount;
+
+    if (_activeAccount?.id == id) {
+      _activeAccount = updatedAccount;
+    }
+
     await saveToJson();
     _updateListeners();
     return updatedAccount;

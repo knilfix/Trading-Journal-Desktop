@@ -30,7 +30,7 @@ class PartialsTable extends StatelessWidget {
       children: [
         TableRow(
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           children: [
             _buildHeaderCell(context, "%"),

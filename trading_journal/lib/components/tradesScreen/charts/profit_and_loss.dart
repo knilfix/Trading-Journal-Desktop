@@ -36,7 +36,9 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
 
     return Consumer2<AccountService, TradeService>(
       builder: (context, accountService, tradeService, child) {
-        final activeAccount = accountService.activeAccount;
+        final activeAccount = accountService.activeAccount != null
+            ? accountService.getAccountById(accountService.activeAccount!.id)
+            : null;
 
         if (activeAccount == null) {
           return Center(
