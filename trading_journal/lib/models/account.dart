@@ -9,6 +9,8 @@ class Account {
   final double? target;
   final double? maxLoss;
   final bool isActive;
+  final double commission;
+  final double swap;
 
   Account({
     required this.id,
@@ -21,6 +23,8 @@ class Account {
     this.target,
     this.maxLoss,
     this.isActive = false,
+    this.commission = 0.0,
+    this.swap = 0.0,
   });
 
   Map<String, dynamic> toMap() {
@@ -34,7 +38,7 @@ class Account {
       'created_at': createdAt?.toIso8601String(),
       'target': target,
       'maxLoss': maxLoss,
-      'is_active': isActive, // Add this
+      'is_active': isActive,
     };
   }
 

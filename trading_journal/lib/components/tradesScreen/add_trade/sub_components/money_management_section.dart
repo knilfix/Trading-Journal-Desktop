@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/modern_text_field.dart';
+import 'package:trading_journal/components/tradesScreen/add_trade/trade-partials/trade_partial_modal.dart';
+
 import 'package:trading_journal/models/account.dart';
 import 'package:trading_journal/services/account_service.dart';
 import './helpers.dart';
@@ -30,7 +32,38 @@ class MoneyManagementSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        buildSectionHeader('Money Management', context),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            buildSectionHeader('Money Management', context),
+            IconButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => TradePartialModal(
+                    riskController: riskController,
+                    pnlController: pnlController,
+                  ),
+                );
+              },
+              icon: Icon(Icons.pie_chart_outline, size: 20),
+              tooltip: 'Manage partial positions',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              style: IconButton.styleFrom(
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primaryContainer.withAlpha(112),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+
         const SizedBox(height: 16),
         Row(
           children: [

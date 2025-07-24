@@ -35,7 +35,7 @@ class TradingJournalApp extends StatelessWidget {
         builder: (context, value, child) {
           return MaterialApp(
             title: 'Trading Journal Pro',
-            debugShowCheckedModeBanner: false,
+            debugShowCheckedModeBanner: true,
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: value.themeMode,
