@@ -39,10 +39,12 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   CurrencyPair? _lastSelectedCurrencyPair;
   TradeDirection _lastDirection = TradeDirection.buy;
   double _lastRiskPercentage = 1.0; // Default risk percentage of 1%
+  double _lastFees = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _feesController.text = _lastFees.toStringAsFixed(2);
   }
 
   @override
@@ -106,6 +108,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
       // Re-set controllers to persist after Form.reset
       _riskController.text = newRiskAmount.toStringAsFixed(2);
       _pnlController.text = (-newRiskAmount).toStringAsFixed(2);
+      _feesController.text = _lastFees.toStringAsFixed(2);
       _isResetting = false;
 
       debugPrint(
@@ -200,12 +203,18 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
           double.tryParse(_riskPercentageController.text) ??
           _lastRiskPercentage;
 
+      final fees = double.tryParse(_feesController.text) ?? 0.0;
+      _lastFees = fees;
+
+      final pnl = double.parse(_pnlController.text);
+      final totalPnl = pnl - fees;
+
       final success = await widget.controller.submitTrade(
         accountId: activeAccount.id,
         currencyPair: _selectedCurrencyPair!,
         direction: _direction,
         riskAmount: double.parse(_riskController.text),
-        pnl: double.parse(_pnlController.text),
+        pnl: totalPnl,
         entryTime: _entryTime,
         exitTime: _exitTime,
         notes: _notesController.text,
