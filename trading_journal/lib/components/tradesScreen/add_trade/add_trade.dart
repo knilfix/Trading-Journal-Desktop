@@ -39,12 +39,10 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   CurrencyPair? _lastSelectedCurrencyPair;
   TradeDirection _lastDirection = TradeDirection.buy;
   double _lastRiskPercentage = 1.0; // Default risk percentage of 1%
-  double _lastFees = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _feesController.text = _lastFees.toStringAsFixed(2);
   }
 
   @override
@@ -76,6 +74,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
     _pnlController.dispose();
     _notesController.dispose();
     _riskPercentageController.dispose();
+    _feesController.dispose();
     super.dispose();
   }
 
@@ -107,7 +106,6 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
       // Re-set controllers to persist after Form.reset
       _riskController.text = newRiskAmount.toStringAsFixed(2);
       _pnlController.text = (-newRiskAmount).toStringAsFixed(2);
-      _feesController.text = _lastFees.toStringAsFixed(2);
       _isResetting = false;
 
       debugPrint(
@@ -202,18 +200,12 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
           double.tryParse(_riskPercentageController.text) ??
           _lastRiskPercentage;
 
-      // Safer parsing with defaults
-      double pnl = double.tryParse(_pnlController.text) ?? 0.0;
-      double fees = double.tryParse(_feesController.text) ?? 0.0;
-      _lastFees = fees;
-      double finalPnl = pnl - fees; // Fees reduce PNL
-
       final success = await widget.controller.submitTrade(
         accountId: activeAccount.id,
         currencyPair: _selectedCurrencyPair!,
         direction: _direction,
         riskAmount: double.parse(_riskController.text),
-        pnl: finalPnl,
+        pnl: double.parse(_pnlController.text),
         entryTime: _entryTime,
         exitTime: _exitTime,
         notes: _notesController.text,
@@ -229,9 +221,6 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
         );
         _resetForm(updatedBalance: _latestBalance!);
       }
-    } catch (e) {
-      debugPrint('Error submitting trade: $e');
-      if (mounted) showError(context, 'Error submitting trade: $e');
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
