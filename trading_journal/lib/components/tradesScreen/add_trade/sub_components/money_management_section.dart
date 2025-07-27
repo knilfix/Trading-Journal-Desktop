@@ -10,6 +10,7 @@ class MoneyManagementSection extends StatelessWidget {
   final TextEditingController riskController;
   final TextEditingController pnlController;
   final TextEditingController riskPercentageController;
+  final TextEditingController feesController;
 
   final VoidCallback setStateCallback;
   final BuildContext parentContext;
@@ -25,6 +26,7 @@ class MoneyManagementSection extends StatelessWidget {
     required this.parentContext,
     required this.showErrorCallback,
     this.accountType,
+    required this.feesController,
   });
 
   @override
@@ -120,6 +122,8 @@ class MoneyManagementSection extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        ModernTextField(controller: feesController, label: 'Fees'),
       ],
     );
   }

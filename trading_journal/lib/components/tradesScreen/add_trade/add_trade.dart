@@ -27,6 +27,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   final _pnlController = TextEditingController();
   final _notesController = TextEditingController();
   final _riskPercentageController = TextEditingController();
+  final _feesController = TextEditingController();
   bool _isSubmitting = false;
   bool _isResetting = false; // Flag to skip didChangeDependencies
   double? _latestBalance; // Store latest balance
@@ -42,6 +43,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   @override
   void initState() {
     super.initState();
+    _feesController.text = '0.00';
   }
 
   @override
@@ -143,6 +145,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                       riskController: _riskController,
                       pnlController: _pnlController,
                       riskPercentageController: _riskPercentageController,
+                      feesController: _feesController,
                       setStateCallback: () {
                         debugPrint('[DEBUG] setStateCallback triggered');
                         setState(() {});
@@ -197,12 +200,17 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
           double.tryParse(_riskPercentageController.text) ??
           _lastRiskPercentage;
 
+      // Safer parsing with defaults
+      double pnl = double.tryParse(_pnlController.text) ?? 0.0;
+      double fees = double.tryParse(_feesController.text) ?? 0.0;
+      double finalPnl = pnl - fees; // Fees reduce PNL
+
       final success = await widget.controller.submitTrade(
         accountId: activeAccount.id,
         currencyPair: _selectedCurrencyPair!,
         direction: _direction,
         riskAmount: double.parse(_riskController.text),
-        pnl: double.parse(_pnlController.text),
+        pnl: finalPnl,
         entryTime: _entryTime,
         exitTime: _exitTime,
         notes: _notesController.text,
@@ -218,6 +226,9 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
         );
         _resetForm(updatedBalance: _latestBalance!);
       }
+    } catch (e) {
+      debugPrint('Error submitting trade: $e');
+      if (mounted) showError(context, 'Error submitting trade: $e');
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
