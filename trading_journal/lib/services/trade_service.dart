@@ -9,28 +9,28 @@ import '../services/account_service.dart';
 
 /// Service for managing trades, including CRUD operations, persistence, and reactive updates for the active account.
 class TradeService extends ChangeNotifier {
-  /// Singleton instance of TradeService.
-  static final TradeService instance = TradeService._internal();
-
   /// Private constructor for singleton pattern. Loads trades from storage on initialization.
   TradeService._internal() {
     loadFromJson();
   }
 
-  /// In-memory list of all trades.
-  final List<Trade> _trades = [];
+  /// Singleton instance of TradeService.
+  static final TradeService instance = TradeService._internal();
+
+  static const String _tradeFileName = 'trades.json';
 
   /// The next trade ID to assign.
   int _nextId = 1;
 
-  static const String _tradeFileName = 'trades.json';
-
-  /// Returns an unmodifiable list of all trades.
-  List<Trade> get trades => List.unmodifiable(_trades);
+  /// In-memory list of all trades.
+  final List<Trade> _trades = [];
 
   /// Stream controller for broadcasting trade list updates.
   final StreamController<List<Trade>> _tradesStream =
       StreamController.broadcast();
+
+  /// Returns an unmodifiable list of all trades.
+  List<Trade> get trades => List.unmodifiable(_trades);
 
   /// Stream of all trades (for reactive UI updates).
   Stream<List<Trade>> get tradesStream => _tradesStream.stream;
@@ -42,16 +42,6 @@ class TradeService extends ChangeNotifier {
     } catch (e) {
       return null;
     }
-  }
-
-  /// Returns a File handle for the trades.json file in the app's documents directory.
-  Future<File> _getTradeFile() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final appDir = Directory('${directory.path}/TradingJournal');
-    if (!await appDir.exists()) {
-      await appDir.create(recursive: true);
-    }
-    return File('${appDir.path}/$_tradeFileName');
   }
 
   /// Records a new trade for the given account, updates the account balance, and persists the change.
@@ -197,5 +187,15 @@ class TradeService extends ChangeNotifier {
     final activeAccountId = AccountService.instance.activeAccount?.id;
     if (activeAccountId == null) return [];
     return _trades.where((t) => t.accountId == activeAccountId).toList();
+  }
+
+  /// Returns a File handle for the trades.json file in the app's documents directory.
+  Future<File> _getTradeFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final appDir = Directory('${directory.path}/TradingJournal');
+    if (!await appDir.exists()) {
+      await appDir.create(recursive: true);
+    }
+    return File('${appDir.path}/$_tradeFileName');
   }
 }
