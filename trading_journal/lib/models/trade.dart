@@ -9,7 +9,7 @@ class Trade {
   final double pnl;
   final double postTradeBalance; // Add this property
   final String? notes;
-  final List<String>? attachmentPaths;
+  final String screenshotPath;
 
   Trade({
     this.id,
@@ -22,8 +22,37 @@ class Trade {
     required this.pnl,
     required this.postTradeBalance, // Add to constructor
     this.notes,
-    this.attachmentPaths,
+    this.screenshotPath = "",
   });
+
+  // Simplified copyWith
+  Trade copyWith({
+    int? id,
+    int? accountId,
+    CurrencyPair? currencyPair,
+    TradeDirection? direction,
+    DateTime? entryTime,
+    DateTime? exitTime,
+    double? riskAmount,
+    double? pnl,
+    double? postTradeBalance,
+    String? notes,
+    String? screenshotPath,
+  }) {
+    return Trade(
+      id: id ?? this.id,
+      accountId: accountId ?? this.accountId,
+      currencyPair: currencyPair ?? this.currencyPair,
+      direction: direction ?? this.direction,
+      entryTime: entryTime ?? this.entryTime,
+      exitTime: exitTime ?? this.exitTime,
+      riskAmount: riskAmount ?? this.riskAmount,
+      pnl: pnl ?? this.pnl,
+      postTradeBalance: postTradeBalance ?? this.postTradeBalance,
+      notes: notes ?? this.notes,
+      screenshotPath: screenshotPath ?? this.screenshotPath,
+    );
+  }
 
   // Update serialization methods
   Map<String, dynamic> toMap() {
@@ -38,6 +67,7 @@ class Trade {
       'entry_time': entryTime.toIso8601String(),
       'exit_time': exitTime.toIso8601String(),
       'notes': notes,
+      'screenshot_path': screenshotPath.isEmpty ? null : screenshotPath,
     };
   }
 
@@ -57,11 +87,15 @@ class Trade {
       entryTime: DateTime.parse(map['entry_time']),
       exitTime: DateTime.parse(map['exit_time']),
       notes: map['notes'] as String?,
-      attachmentPaths: map['attachment_paths'] != null
-          ? List<String>.from(map['attachment_paths'])
-          : null,
+      screenshotPath: map['screenshot_path'] as String? ?? "",
     );
   }
+
+  // Helper to set screenshot
+  Trade withScreenshot(String path) => copyWith(screenshotPath: path);
+
+  // Helper to remove screenshot
+  Trade withoutScreenshot() => copyWith(screenshotPath: null);
 
   double get riskRewardRatio {
     if (riskAmount == 0) return 0;
