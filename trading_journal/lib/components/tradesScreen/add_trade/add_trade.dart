@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
 import 'package:trading_journal/components/tradesScreen/add_trade/sub_components/helpers.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/sub_components/money_management_section.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/trade_submission_controller.dart';
@@ -40,6 +44,8 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   TradeDirection _lastDirection = TradeDirection.buy;
   double _lastRiskPercentage = 1.0; // Default risk percentage of 1%
   double _lastFees = 0.0;
+  File? _screenshotFile;
+  String? _screenshotPath;
 
   @override
   void initState() {
@@ -80,6 +86,34 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
     super.dispose();
   }
 
+  Future<void> _captureScreenshot() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true, // Loads file data immediately
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _screenshotFile = File(result.files.single.path!);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _removeScreenshot() async {
+    setState(() {
+      _screenshotFile = null;
+      _screenshotPath = null;
+    });
+  }
+
   void _resetForm({required double updatedBalance}) {
     if (!mounted) return;
 
@@ -109,6 +143,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
       _riskController.text = newRiskAmount.toStringAsFixed(2);
       _pnlController.text = (-newRiskAmount).toStringAsFixed(2);
       _feesController.text = _lastFees.toStringAsFixed(2);
+      _removeScreenshot();
       _isResetting = false;
 
       debugPrint(
@@ -164,6 +199,8 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
                     _buildTimingSection(),
                     const SizedBox(height: 32),
                     _buildNotesSection(),
+                    const SizedBox(height: 32),
+                    _buildScreenShotSection(),
                   ],
                 ),
               ),
@@ -218,6 +255,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
         entryTime: _entryTime,
         exitTime: _exitTime,
         notes: _notesController.text,
+        screenshotFile: _screenshotFile,
         context: context,
       );
 
@@ -387,6 +425,48 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildScreenShotSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        buildSectionHeader('Screenshots', context),
+        const SizedBox(height: 16),
+
+        if (_screenshotFile != null)
+          Stack(
+            children: [
+              Container(
+                height: 150,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: FileImage(_screenshotFile!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: _removeScreenshot,
+                ),
+              ),
+            ],
+          )
+        else
+          OutlinedButton.icon(
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Add Screenshot'),
+            onPressed: _captureScreenshot,
+          ),
+
+        const SizedBox(height: 16),
+      ],
     );
   }
 }

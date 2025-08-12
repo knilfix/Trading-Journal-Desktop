@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/sub_components/helpers.dart';
 import 'package:trading_journal/models/trade.dart';
@@ -14,6 +16,7 @@ class TradeSubmissionController {
     required DateTime entryTime,
     required DateTime exitTime,
     String? notes,
+    File? screenshotFile,
     required BuildContext context,
   }) async {
     debugPrint('[DEBUG] Submit Trade initiated');
@@ -58,6 +61,7 @@ class TradeSubmissionController {
         entryTime: entryTime,
         exitTime: exitTime,
         notes: notes, // Fixed: Include notes
+        screenshotFile: screenshotFile,
       );
 
       if (trade != null) {

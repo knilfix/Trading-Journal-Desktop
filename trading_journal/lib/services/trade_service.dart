@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:trading_journal/models/trade.dart';
 import '../services/account_service.dart';
+import '../services/trade_screenshot_service.dart';
 
 /// Service for managing trades, including CRUD operations, persistence, and reactive updates for the active account.
 class TradeService extends ChangeNotifier {
@@ -64,10 +65,22 @@ class TradeService extends ChangeNotifier {
     required DateTime entryTime,
     required DateTime exitTime,
     String? notes,
+    File? screenshotFile,
   }) async {
     assert(exitTime.isAfter(entryTime), "Exit time must be after entry time");
 
     try {
+      //1. Handle screenshot
+      String screenshotPath = "";
+      if (screenshotFile != null) {
+        final path = await TradeScreenshotService.saveScreenshot(
+          screenshotFile,
+          _nextId,
+        );
+        screenshotPath = path ?? ""; // Fallback to empty string
+      }
+
+      //2. Proceed with trade creation
       final account = AccountService.instance.getAccountById(accountId);
       if (account == null) {
         return null;
@@ -93,6 +106,7 @@ class TradeService extends ChangeNotifier {
         entryTime: entryTime,
         exitTime: exitTime,
         notes: notes,
+        screenshotPath: screenshotPath,
       );
 
       _trades.add(trade);
@@ -116,7 +130,12 @@ class TradeService extends ChangeNotifier {
       }
       final tradeToDelete = _trades[tradeIndex];
 
-      // 2. Get the associated account
+      // 2. delete associated screenshot if it exist
+      if (tradeToDelete.screenshotPath.isNotEmpty) {
+        await TradeScreenshotService.deleteTradeScreenshot(tradeId);
+      }
+
+      // 3. Get the associated account
       final account = AccountService.instance.getAccountById(
         tradeToDelete.accountId,
       );
@@ -124,21 +143,22 @@ class TradeService extends ChangeNotifier {
         return false;
       }
 
-      // 3. Calculate new balance by reversing the trade's PnL
+      // 4. Calculate new balance by reversing the trade's PnL
       final newBalance = account.balance - tradeToDelete.pnl;
 
-      // 4. Update the account balance
+      // 5. Update the account balance
       final updatedAccount = await AccountService.instance.updateAccountBalance(
         tradeToDelete.accountId,
         newBalance,
       );
       if (updatedAccount == null) return false;
 
-      // 5. Remove the trade
+      // 6. Remove the trade
+
       _trades.removeAt(tradeIndex);
       await saveToJson();
 
-      // 6. Notify listeners and update stream
+      // 7. Notify listeners and update stream
       _tradesStream.add(_trades);
       notifyListeners();
 
