@@ -45,7 +45,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   TradeDirection _lastDirection = TradeDirection.buy;
   double _lastRiskPercentage = 1.0; // Default risk percentage of 1%
   double _lastFees = 0.0;
-  List<TradeScreenshot> _screenshots = [];
+  final List<TradeScreenshot> _screenshots = [];
   // Possible timeframes for a trade
   List<String> timeframes = [
     '1m',

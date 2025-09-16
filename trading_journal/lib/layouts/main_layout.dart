@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:trading_journal/screens/analytics_screen.dart';
 import 'package:trading_journal/screens/demo_screen.dart';
 import 'package:trading_journal/screens/calendar/table_calendar.dart';
 import '../components/layout/sidebar.dart';
 import '../models/navigation_item.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/settings_screen.dart';
-import '../screens/portfolio_screen.dart';
 import '../components/accounts/account_selection_screen.dart';
 
 class MainLayout extends StatefulWidget {
@@ -35,13 +35,13 @@ class _MainLayoutState extends State<MainLayout> {
     NavigationItem(
       icon: Icons.pie_chart_outline,
       selectedIcon: Icons.pie_chart,
-      label: 'Portfolio',
-      screen: const PortfolioScreen(),
+      label: 'Analytics',
+      screen: const AnalyticsScreen(),
     ),
     NavigationItem(
       icon: Icons.analytics_outlined,
       selectedIcon: Icons.analytics,
-      label: 'Analytics',
+      label: 'Calendar',
       screen: const TradeCalendar(),
     ),
     NavigationItem(
@@ -52,7 +52,7 @@ class _MainLayoutState extends State<MainLayout> {
     ),
     NavigationItem(
       icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
+      selectedIcon: Icons.developer_mode_sharp,
       label: 'Demos',
       screen: const DemoScreen(),
     ),

@@ -8,7 +8,7 @@ import '../../../models/account.dart';
 
 class ProfitLossChart extends StatefulWidget {
   final int? maxTradesToShow;
-  static const double chartHeight = 640;
+
   static const double containerPadding = 10;
   static const double dotRadius = 2;
   static const double dotStrokeWidth = 1;
@@ -74,7 +74,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
                 .abs()) *
             0.1;
 
-        final bool useTargetRange = tradeCount <= 1; // or 2, adjust as you like
+        final bool useTargetRange = tradeCount <= 1;
 
         final double minY = useTargetRange
             ? ((activeAccount.maxLoss ?? 0) - yPadding)
@@ -84,7 +84,7 @@ class _ProfitLossChartState extends State<ProfitLossChart> {
             : processor.calculateMaxY();
 
         return Container(
-          height: ProfitLossChart.chartHeight,
+          // REMOVE THE HEIGHT PROPERTY HERE
           padding: const EdgeInsets.all(ProfitLossChart.containerPadding),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,

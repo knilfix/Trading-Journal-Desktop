@@ -101,23 +101,21 @@ class _TradesScreenState extends State<TradesScreen> {
     );
   }
 
+  // Refactored _buildTradeEntryView
   Widget _buildTradeEntryView() {
     return Row(
       key: const ValueKey('trade_entry'),
       children: [
-        // Left Panel - Trade Entry (25%)
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.35,
-          child: AddTradeScreen(
-            width: 0.35,
-            controller: TradeSubmissionController(),
-          ),
+        // Left Panel - Trade Entry (Flexible instead of SizedBox)
+        Flexible(
+          flex: 3, // For example, 30% of the space
+          child: AddTradeScreen(controller: TradeSubmissionController()),
         ),
-
-        // Right Panel - Performance Chart (75%)
+        // Right Panel - Performance Chart
         Expanded(
+          flex: 7, // For example, 70% of the space
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(4.0),
             child: const ProfitLossChart(),
           ),
         ),

@@ -154,7 +154,7 @@ class _TradeScreenshotsViewState extends State<TradeScreenshotsView> {
         if (snapshot.hasError || !snapshot.data!) {
           return Card(
             clipBehavior: Clip.antiAlias,
-            child: Container(
+            child: SizedBox(
               height: height, // Use the provided height
               child: Center(
                 child: Column(
@@ -173,7 +173,7 @@ class _TradeScreenshotsViewState extends State<TradeScreenshotsView> {
         return Card(
           clipBehavior: Clip.antiAlias,
           margin: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Container(
+          child: SizedBox(
             height: height, // Use the provided height
             child: Stack(
               fit: StackFit.expand,
