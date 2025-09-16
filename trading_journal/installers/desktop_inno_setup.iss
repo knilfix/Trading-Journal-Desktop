@@ -11,8 +11,8 @@
 #define MyAppURL "https://www.example.com/"
 #define MyAppExeName "trading_journal.exe"
 #define MyAppIcon "favicon.ico"
-#define BuildPath "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release"
-#define InstallersPath "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\installers"
+#define BuildPath "E:\Programming Projects\Flutter Projects\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release"
+#define InstallersPath "E:\Programming Projects\Flutter Projects\Trading-Journal-Desktop\trading_journal\installers"
 
 [Setup]
 AppId={{4116A86E-5709-4C40-9EBA-FF5D2BA3082B}
@@ -62,4 +62,4 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}\data"  ;
+Type: filesandordirs; Name: "{app}\data"  ; 
