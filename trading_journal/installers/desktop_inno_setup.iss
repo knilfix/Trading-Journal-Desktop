@@ -2,7 +2,7 @@
 ; Inno Setup script for Trading Journal application
 
 #define MyAppName "Trading Journal"
-#define MyAppVersion "1.4"
+#define MyAppVersion "1.5"
 #define MyAppPublisher "Monster University, Inc."
 #define MyAppURL "https://www.example.com/"
 #define MyAppExeName "trading_journal.exe"
@@ -23,7 +23,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 DisableProgramGroupPage=yes
 OutputDir=E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\installers
-OutputBaseFilename=trading_journal_v1.4
+OutputBaseFilename=trading_journal_v1.5
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -39,6 +39,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release\awesome_notifications_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Programming Projects\Flutter Projects\Trading Journal\Trading-Journal-Desktop\trading_journal\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Application icon file

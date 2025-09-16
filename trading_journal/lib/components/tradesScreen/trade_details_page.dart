@@ -41,14 +41,14 @@ class TradeDetailsPage extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // Trade Summary Card
             _buildSummaryCard(context, trade, isProfit),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 6),
 
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +248,7 @@ class TradeDetailsPage extends StatelessWidget {
                         iconColor: colorScheme.primary,
                         children: [
                           SizedBox(
-                            height: 55,
+                            height: 85,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
@@ -280,14 +280,14 @@ class TradeDetailsPage extends StatelessWidget {
 
   Widget _buildSummaryCard(BuildContext context, Trade trade, bool isProfit) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+
     final directionColor = trade.direction == TradeDirection.buy
         ? Colors.green[400]
         : Colors.red[400];
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(6),
         child: Column(
           children: [
             Row(
