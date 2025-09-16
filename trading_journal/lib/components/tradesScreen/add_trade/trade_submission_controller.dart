@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/sub_components/helpers.dart';
 import 'package:trading_journal/models/trade.dart';
 import 'package:trading_journal/services/account_service.dart';
 import 'package:trading_journal/services/trade_service.dart';
+import '../../../models/trade_screenshot.dart';
 
 class TradeSubmissionController {
   Future<bool> submitTrade({
@@ -16,7 +15,7 @@ class TradeSubmissionController {
     required DateTime entryTime,
     required DateTime exitTime,
     String? notes,
-    File? screenshotFile,
+    List<TradeScreenshot>? screenshots,
     required BuildContext context,
   }) async {
     debugPrint('[DEBUG] Submit Trade initiated');
@@ -51,6 +50,7 @@ class TradeSubmissionController {
       debugPrint('  - Risk: $riskAmount');
       debugPrint('  - PnL: $pnl');
       debugPrint('  - Entry Time: $entryTime');
+      debugPrint('  - Number of screenshots: ${screenshots?.length}');
 
       final trade = await TradeService.instance.recordTrade(
         accountId: accountId,
@@ -61,7 +61,7 @@ class TradeSubmissionController {
         entryTime: entryTime,
         exitTime: exitTime,
         notes: notes, // Fixed: Include notes
-        screenshotFile: screenshotFile,
+        screenshots: screenshots,
       );
 
       if (trade != null) {

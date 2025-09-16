@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trading_journal/components/tradesScreen/trade_details_page.dart';
+import 'package:trading_journal/components/tradesScreen/trade_details/trade_details_page.dart';
 import 'package:trading_journal/models/trade.dart';
 
 class CompactTradeListItem extends StatelessWidget {
@@ -27,7 +27,6 @@ class CompactTradeListItem extends StatelessWidget {
         ? Colors.red[400]
         : Colors.grey[400];
     final notes = trade.notes;
-    final screenshotPath = trade.screenshotPath;
 
     return InkWell(
       borderRadius: BorderRadius.circular(4),
@@ -163,7 +162,7 @@ class CompactTradeListItem extends StatelessWidget {
                         ),
 
                       // Show screenshot icon if screenshot exists
-                      if (screenshotPath != "")
+                      if (trade.screenshots.isNotEmpty)
                         Icon(
                           Icons.camera_alt,
                           size: 14,

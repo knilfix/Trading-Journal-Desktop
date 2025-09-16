@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/sub_components/helpers.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/sub_components/money_management_section.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/trade_submission_controller.dart';
+import 'package:trading_journal/models/trade_screenshot.dart';
 import 'package:trading_journal/services/account_service.dart';
 import 'package:trading_journal/models/trade.dart';
 import 'package:trading_journal/components/tradesScreen/add_trade/modern_text_field.dart';
@@ -44,8 +45,20 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
   TradeDirection _lastDirection = TradeDirection.buy;
   double _lastRiskPercentage = 1.0; // Default risk percentage of 1%
   double _lastFees = 0.0;
-  File? _screenshotFile;
-  String? _screenshotPath;
+  List<TradeScreenshot> _screenshots = [];
+  // Possible timeframes for a trade
+  List<String> timeframes = [
+    '1m',
+    '5m',
+    '15m',
+    '30m',
+    '1h',
+    '2h',
+    '4h',
+    'D',
+    'W',
+    'M',
+  ];
 
   @override
   void initState() {
@@ -86,17 +99,51 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
     super.dispose();
   }
 
-  Future<void> _captureScreenshot() async {
+  Future<void> _showTimeframeDialogAndPickImage() async {
+    String? selectedTimeframe;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Timeframe'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: timeframes.map((timeframe) {
+                return ListTile(
+                  title: Text(timeframe),
+                  onTap: () {
+                    selectedTimeframe = timeframe;
+                    Navigator.of(context).pop();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+
+    // If a timeframe was selected, proceed to pick the image
+    if (selectedTimeframe != null) {
+      await _captureScreenshot(selectedTimeframe!);
+    }
+  }
+
+  Future<void> _captureScreenshot(String timeframe) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
-        withData: true, // Loads file data immediately
+        withData: true,
       );
 
       if (result != null && result.files.single.path != null) {
+        final newFile = File(result.files.single.path!);
         setState(() {
-          _screenshotFile = File(result.files.single.path!);
+          _screenshots.add(
+            TradeScreenshot(file: newFile, timeframe: timeframe),
+          );
         });
       }
     } catch (e) {
@@ -107,10 +154,9 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
     }
   }
 
-  Future<void> _removeScreenshot() async {
+  void _removeScreenshot(int index) {
     setState(() {
-      _screenshotFile = null;
-      _screenshotPath = null;
+      _screenshots.removeAt(index);
     });
   }
 
@@ -143,7 +189,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
       _riskController.text = newRiskAmount.toStringAsFixed(2);
       _pnlController.text = (-newRiskAmount).toStringAsFixed(2);
       _feesController.text = _lastFees.toStringAsFixed(2);
-      _removeScreenshot();
+      _screenshots.clear();
       _isResetting = false;
 
       debugPrint(
@@ -255,7 +301,7 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
         entryTime: _entryTime,
         exitTime: _exitTime,
         notes: _notesController.text,
-        screenshotFile: _screenshotFile,
+        screenshots: _screenshots,
         context: context,
       );
 
@@ -434,39 +480,69 @@ class _AddTradeScreenState extends State<AddTradeScreen> {
       children: [
         buildSectionHeader('Screenshots', context),
         const SizedBox(height: 16),
-
-        if (_screenshotFile != null)
-          Stack(
-            children: [
-              Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: FileImage(_screenshotFile!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: _removeScreenshot,
-                ),
-              ),
-            ],
-          )
-        else
-          OutlinedButton.icon(
-            icon: const Icon(Icons.camera_alt),
-            label: const Text('Add Screenshot'),
-            onPressed: _captureScreenshot,
+        // Display the list of screenshots
+        if (_screenshots.isNotEmpty)
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _screenshots.length,
+            itemBuilder: (context, index) {
+              final screenshot = _screenshots[index];
+              return _buildScreenshotCard(screenshot, index);
+            },
           ),
 
         const SizedBox(height: 16),
+
+        // Button to add more screenshots
+        OutlinedButton.icon(
+          icon: const Icon(Icons.add_a_photo_outlined),
+          label: const Text('Add Screenshot'),
+          onPressed: _showTimeframeDialogAndPickImage,
+        ),
       ],
+    );
+  }
+
+  Widget _buildScreenshotCard(TradeScreenshot screenshot, int index) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+            child: Image.file(
+              screenshot.file,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 150,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Chip(
+                  label: Text(screenshot.timeframe),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.1),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => _removeScreenshot(index),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
