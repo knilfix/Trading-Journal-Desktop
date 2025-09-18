@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:trading_journal/models/profit_loss_data.dart';
 import 'package:trading_journal/services/trade_data_processor.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -28,10 +29,6 @@ class ProfitLossView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Section
-                _buildHeader(theme),
-                const SizedBox(height: 32),
-
                 // Key P&L Metrics
                 _buildPnLSummaryCards(profitLossData, theme),
                 const SizedBox(height: 32),
@@ -47,29 +44,6 @@ class ProfitLossView extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeader(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Profit & Loss Analysis',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Comprehensive P&L breakdown and trading performance insights',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-          ),
-        ),
-      ],
     );
   }
 
@@ -292,17 +266,20 @@ class ProfitLossView extends StatelessWidget {
     );
   }
 
-  Widget _buildPnLPieChart(dynamic profitLossData, ThemeData theme) {
-    final totalProfit = profitLossData.biggestWinningDay.abs();
-    final totalLoss = profitLossData.biggestLosingDay.abs();
-    final total = totalProfit + totalLoss;
+  Widget _buildPnLPieChart(ProfitLossData profitLossData, ThemeData theme) {
+    final totalProfit = profitLossData.totalProfit;
+    final totalLoss = profitLossData.totalLoss;
 
-    if (total == 0) {
+    // For pie chart, we want to show the composition of gross P&L
+    final totalGross =
+        totalProfit + totalLoss; // This is the sum of absolute values
+
+    if (totalGross == 0) {
       return Center(
         child: Text(
           'No P&L data available',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withAlpha(216),
           ),
         ),
       );
@@ -316,7 +293,8 @@ class ProfitLossView extends StatelessWidget {
           PieChartSectionData(
             color: Colors.green,
             value: totalProfit,
-            title: '${(totalProfit / total * 100).toStringAsFixed(1)}%',
+            title:
+                '${(totalProfit / totalGross * 100).toStringAsFixed(1)}%\n\$${totalProfit.toStringAsFixed(2)}',
             radius: 60,
             titleStyle: const TextStyle(
               fontSize: 12,
@@ -327,7 +305,8 @@ class ProfitLossView extends StatelessWidget {
           PieChartSectionData(
             color: Colors.red,
             value: totalLoss,
-            title: '${(totalLoss / total * 100).toStringAsFixed(1)}%',
+            title:
+                '${(totalLoss / totalGross * 100).toStringAsFixed(1)}%\n\$${totalLoss.toStringAsFixed(2)}',
             radius: 60,
             titleStyle: const TextStyle(
               fontSize: 12,

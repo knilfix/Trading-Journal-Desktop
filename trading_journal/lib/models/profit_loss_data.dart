@@ -5,6 +5,8 @@ class ProfitLossData {
   final double biggestWinningDay;
   final double biggestLosingDay;
   final double averagePnL;
+  final double totalProfit;
+  final double totalLoss;
 
   final int totalTrades;
   final double expectancy;
@@ -16,5 +18,7 @@ class ProfitLossData {
     required this.averagePnL,
     required this.totalTrades,
     required this.expectancy,
+    required this.totalProfit,
+    required this.totalLoss,
   });
 }

@@ -26,10 +26,6 @@ class PerformanceView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                _buildHeader(colorScheme),
-                const SizedBox(height: 32),
-
                 // Key Performance Metrics Cards
                 _buildMetricsGrid(metrics, colorScheme),
                 const SizedBox(height: 32),
@@ -45,27 +41,6 @@ class PerformanceView extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeader(ColorScheme colorScheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Performance Analytics',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Comprehensive trading performance overview',
-          style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
-        ),
-      ],
     );
   }
 

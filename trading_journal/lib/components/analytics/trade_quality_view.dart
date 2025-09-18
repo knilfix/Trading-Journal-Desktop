@@ -52,10 +52,6 @@ class TradeQualityView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                _buildHeader(theme),
-                const SizedBox(height: 32),
-
                 // Top Row - Risk/Reward and Hold Time
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,39 +92,6 @@ class TradeQualityView extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeader(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.analytics_rounded,
-              size: 32,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Trade Quality Analytics',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Comprehensive analysis of trading patterns, timing, and risk management',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-          ),
-        ),
-      ],
     );
   }
 
@@ -224,7 +187,7 @@ class TradeQualityView extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -503,7 +466,7 @@ class TradeQualityView extends StatelessWidget {
     }
 
     List<BarChartGroupData> barGroups = [];
-    data.hourlyPerformance.entries.forEach((entry) {
+    for (var entry in data.hourlyPerformance.entries) {
       barGroups.add(
         BarChartGroupData(
           x: entry.key,
@@ -519,7 +482,7 @@ class TradeQualityView extends StatelessWidget {
           ],
         ),
       );
-    });
+    }
 
     return BarChart(
       BarChartData(
@@ -646,7 +609,7 @@ class TradeQualityView extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
 
             const SizedBox(height: 16),
             _buildPerformanceSummary(

@@ -12,46 +12,64 @@ class ProfitLossCalculator {
         averagePnL: 0.0,
         totalTrades: 0,
         expectancy: 0.0,
+        totalProfit: 0.0,
+        totalLoss: 0.0,
       );
     }
 
-    // Step 1: Calculate Net P&L, total fees, and total trades
+    // Calculate basic metrics
     final netPnL = trades.fold(0.0, (sum, trade) => sum + trade.pnl);
     final totalTrades = trades.length;
     final averagePnL = netPnL / totalTrades;
 
-    // Step 2: Calculate daily P&L to find biggest winning/losing day
+    // Calculate daily P&L
     final Map<String, double> dailyPnl = {};
     for (var trade in trades) {
       final date = trade.exitTime.toIso8601String().substring(0, 10);
       dailyPnl[date] = (dailyPnl[date] ?? 0.0) + trade.pnl;
     }
 
-    // Use min and max from dart:math for a cleaner implementation
-    final biggestWinningDay = dailyPnl.values.reduce(max);
-    final biggestLosingDay = dailyPnl.values.reduce(min);
+    // Handle biggest winning/losing days safely
+    double biggestWinningDay = 0.0;
+    double biggestLosingDay = 0.0;
 
-    // Step 3: Calculate expectancy, handling empty lists
+    if (dailyPnl.isNotEmpty) {
+      biggestWinningDay = dailyPnl.values.reduce(max);
+      biggestLosingDay = dailyPnl.values.reduce(min);
+    }
+
+    // Calculate winning and losing trades
     final winningTrades = trades.where((t) => t.pnl > 0).toList();
     final losingTrades = trades.where((t) => t.pnl < 0).toList();
 
+    // Calculate expectancy
     double avgWin = 0.0;
     if (winningTrades.isNotEmpty) {
-      final grossProfit = winningTrades.fold(0.0, (sum, t) => sum + t.pnl);
-      avgWin = grossProfit / winningTrades.length;
+      avgWin =
+          winningTrades.fold(0.0, (sum, t) => sum + t.pnl) /
+          winningTrades.length;
     }
 
     double avgLoss = 0.0;
     if (losingTrades.isNotEmpty) {
-      final grossLoss = losingTrades.fold(0.0, (sum, t) => sum + t.pnl);
-      avgLoss = grossLoss / losingTrades.length;
+      avgLoss =
+          losingTrades.fold(0.0, (sum, t) => sum + t.pnl.abs()) /
+          losingTrades.length;
     }
 
     final winRate = winningTrades.length / totalTrades;
     final lossRate = losingTrades.length / totalTrades;
+    final expectancy = (winRate * avgWin) - (lossRate * avgLoss);
 
-    // Expectancy formula
-    final expectancy = (winRate * avgWin) - (lossRate * avgLoss.abs());
+    // Calculate total profit and loss
+    final totalProfit = winningTrades.fold(
+      0.0,
+      (sum, trade) => sum + trade.pnl,
+    );
+    final totalLoss = losingTrades.fold(
+      0.0,
+      (sum, trade) => sum + trade.pnl.abs(),
+    );
 
     return ProfitLossData(
       netPnL: netPnL,
@@ -60,6 +78,8 @@ class ProfitLossCalculator {
       averagePnL: averagePnL,
       totalTrades: totalTrades,
       expectancy: expectancy,
+      totalProfit: totalProfit,
+      totalLoss: totalLoss,
     );
   }
 }
