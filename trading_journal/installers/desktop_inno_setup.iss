@@ -2,7 +2,7 @@
 ; Inno Setup script for Trading Journal application
 
 ; ==================== CENTRALIZED VERSION CONFIGURATION ====================
-#define AppVersion "1.6"  ; ← CHANGE ONLY THIS FOR NEW VERSIONS
+#define AppVersion "1.7"  ; ← CHANGE ONLY THIS FOR NEW VERSIONS
 ; ==========================================================================
 
 #define MyAppName "Trading Journal"

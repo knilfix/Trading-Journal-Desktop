@@ -73,7 +73,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
               ),
               prefixIcon: const Icon(Icons.category_outlined),
             ),
-            initialValue: selectedAccountType,
+            value: selectedAccountType,
             onChanged: (AccountType? value) {
               if (value != null) {
                 setState(() {

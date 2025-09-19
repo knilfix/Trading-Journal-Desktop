@@ -31,7 +31,7 @@ class AppearanceSettings extends StatelessWidget {
               trailing: SizedBox(
                 width: 200, // Constrain the dropdown width
                 child: DropdownButtonFormField<ThemeMode>(
-                  initialValue: themeService.themeMode,
+                  value: themeService.themeMode,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
