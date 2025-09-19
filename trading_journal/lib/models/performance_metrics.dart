@@ -13,7 +13,7 @@ class PerformanceMetrics {
   //equity curve data
   final List<Map<String, dynamic>> equityCurveData;
 
-  final List<double> dailyPnl;
+  final Map<String, double> dailyPnl;
 
   PerformanceMetrics({
     required this.trades,

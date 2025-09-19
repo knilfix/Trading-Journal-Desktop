@@ -159,7 +159,7 @@ class PerformanceView extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              flex: 2,
+              flex: 5,
               child: _buildChartContainer(
                 'Equity Curve',
                 _buildEquityCurveChart(metrics, colorScheme),
@@ -168,7 +168,7 @@ class PerformanceView extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(
-              flex: 1,
+              flex: 4,
               child: _buildChartContainer(
                 'Daily P&L Distribution',
                 _buildDailyPnlChart(metrics, colorScheme),
@@ -333,21 +333,38 @@ class PerformanceView extends StatelessWidget {
       );
     }
 
+    // Convert the map to a list of entries and sort by day order
+    final dayOrder = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final sortedEntries = metrics.dailyPnl.entries.toList()
+      ..sort(
+        (a, b) => dayOrder.indexOf(a.key).compareTo(dayOrder.indexOf(b.key)),
+      );
+
     List<BarChartGroupData> barGroups = [];
-    for (int i = 0; i < metrics.dailyPnl.length; i++) {
+    for (int i = 0; i < sortedEntries.length; i++) {
+      final entry = sortedEntries[i];
       barGroups.add(
         BarChartGroupData(
           x: i,
           barRods: [
             BarChartRodData(
-              toY: metrics.dailyPnl[i],
-              color: metrics.dailyPnl[i] >= 0 ? Colors.green : Colors.red,
+              toY: entry.value,
+              color: entry.value >= 0 ? Colors.green : Colors.red,
               width: 8,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(4),
               ),
             ),
           ],
+          showingTooltipIndicators: [0],
         ),
       );
     }
@@ -355,50 +372,45 @@ class PerformanceView extends StatelessWidget {
     return BarChart(
       BarChartData(
         barGroups: barGroups,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: colorScheme.onSurface.withOpacity(0.2),
-              strokeWidth: 1,
-            );
-          },
-        ),
         titlesData: FlTitlesData(
-          show: true,
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          leftTitles: AxisTitles(
+          bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 50,
               getTitlesWidget: (value, meta) {
-                return Text(
-                  '\$${value.toInt()}',
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 12,
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    sortedEntries[value.toInt()].key.substring(
+                      0,
+                      3,
+                    ), // Show "Mon", "Tue", etc.
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 );
               },
             ),
           ),
-          bottomTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
+        gridData: FlGridData(show: true),
         borderData: FlBorderData(show: false),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final day = sortedEntries[groupIndex].key;
+              final pnl = rod.toY;
               return BarTooltipItem(
-                'Day ${group.x + 1}\n\$${rod.toY.toStringAsFixed(2)}',
-                TextStyle(color: colorScheme.onPrimary),
+                '$day: \$${pnl.toStringAsFixed(2)}',
+                TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 8,
+                ),
               );
             },
           ),
@@ -469,45 +481,6 @@ class PerformanceView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Divider(color: colorScheme.onSurface.withOpacity(0.2)),
-          const SizedBox(height: 20),
-          Text(
-            'Recent Equity Points',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...metrics.equityCurveData.take(10).map((dataPoint) {
-            final date = dataPoint['time'] as DateTime;
-            final balance = dataPoint['balance'] as double;
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    '\$${balance.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
         ],
       ),
     );

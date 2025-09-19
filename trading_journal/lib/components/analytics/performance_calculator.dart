@@ -14,7 +14,7 @@ class PerformanceCalculator {
         avgwin: 0.0,
         avgloss: 0.0,
         equityCurveData: [],
-        dailyPnl: [],
+        dailyPnl: {},
       );
     }
 
@@ -73,9 +73,42 @@ class PerformanceCalculator {
     return data;
   }
 
-  List<double> _calculateDailyPnl(List<Trade> trades) {
-    // This is a placeholder for your daily P&L logic
-    // You'll need to group trades by day and sum their P&L
-    return [];
+  Map<String, double> _calculateDailyPnl(List<Trade> trades) {
+    final Map<String, double> dailyPnl = {};
+
+    for (final trade in trades) {
+      // Get the day name (Monday, Tuesday, etc.)
+      final dayName = _getDayName(trade.exitTime.weekday);
+
+      // Add to the daily total
+      dailyPnl.update(
+        dayName,
+        (current) => current + trade.pnl,
+        ifAbsent: () => trade.pnl,
+      );
+    }
+
+    return dailyPnl;
+  }
+
+  String _getDayName(int weekday) {
+    switch (weekday) {
+      case 1:
+        return 'Monday';
+      case 2:
+        return 'Tuesday';
+      case 3:
+        return 'Wednesday';
+      case 4:
+        return 'Thursday';
+      case 5:
+        return 'Friday';
+      case 6:
+        return 'Saturday';
+      case 7:
+        return 'Sunday';
+      default:
+        return 'Unknown';
+    }
   }
 }
