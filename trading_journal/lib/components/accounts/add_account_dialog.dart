@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/account.dart';
 
 class AddAccountDialog extends StatefulWidget {
-  final void Function(
-    double balance,
-    AccountType accountType,
-    String name,
-  )
+  final void Function(double balance, AccountType accountType, String name)
   onSubmit;
 
   const AddAccountDialog({super.key, required this.onSubmit});
@@ -17,10 +13,8 @@ class AddAccountDialog extends StatefulWidget {
 
 class _AddAccountDialogState extends State<AddAccountDialog> {
   AccountType selectedAccountType = AccountType.backtesting;
-  final TextEditingController balanceController =
-      TextEditingController();
-  final TextEditingController nameController =
-      TextEditingController();
+  final TextEditingController balanceController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
 
   @override
   void dispose() {
@@ -40,9 +34,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         prefixIcon: Icon(icon),
       ),
     );
@@ -54,13 +46,8 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
 
     return AlertDialog(
       backgroundColor: DialogTheme.of(context).backgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: Text(
-        'Add New Account',
-        style: theme.textTheme.titleLarge,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text('Add New Account', style: theme.textTheme.titleLarge),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +73,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
               ),
               prefixIcon: const Icon(Icons.category_outlined),
             ),
-            value: selectedAccountType,
+            initialValue: selectedAccountType,
             onChanged: (AccountType? value) {
               if (value != null) {
                 setState(() {
@@ -117,8 +104,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
             ),
             ElevatedButton(
               onPressed: () {
-                final balance =
-                    double.tryParse(balanceController.text) ?? 0.0;
+                final balance = double.tryParse(balanceController.text) ?? 0.0;
                 final name = nameController.text;
                 widget.onSubmit(balance, selectedAccountType, name);
               },

@@ -69,7 +69,7 @@ class _AddPartialDialogState extends State<AddPartialDialog> {
             ),
             const SizedBox(height: 20),
             DropdownButtonFormField<TradeOutcome>(
-              value: _outcome,
+              initialValue: _outcome,
               items: TradeOutcome.values.map((outcome) {
                 return DropdownMenuItem(
                   value: outcome,

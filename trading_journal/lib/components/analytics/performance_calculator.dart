@@ -22,7 +22,7 @@ class PerformanceCalculator {
     final losingTrades = trades.where((t) => t.pnl < 0).toList();
 
     // All your existing calculation logic goes here
-    final double winRate = winningTrades.length / trades.length;
+    final double winRate = (winningTrades.length / trades.length) * 100;
     final double profitFactor = _calculateProfitFactor(
       winningTrades,
       losingTrades,
