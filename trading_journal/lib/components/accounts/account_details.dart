@@ -85,9 +85,7 @@ class AccountDetails extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: getAccountTypeColor(
-                    account.accountType,
-                  ).withOpacity(0.12),
+                  color: getAccountTypeColor(account.accountType).withAlpha(30),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -102,7 +100,7 @@ class AccountDetails extends StatelessWidget {
                 const SizedBox(width: 10),
                 Chip(
                   label: const Text('Active'),
-                  backgroundColor: Colors.green.withOpacity(0.15),
+                  backgroundColor: Colors.green.withAlpha(38),
                   labelStyle: const TextStyle(
                     color: Colors.green,
                     fontWeight: FontWeight.w600,
@@ -122,10 +120,7 @@ class AccountDetails extends StatelessWidget {
           // Balance
           Row(
             children: [
-              const Icon(
-                Icons.account_balance_wallet_outlined,
-                size: 20,
-              ),
+              const Icon(Icons.account_balance_wallet_outlined, size: 20),
               const SizedBox(width: 8),
               Text('Balance:', style: theme.textTheme.bodyMedium),
               const SizedBox(width: 8),
@@ -167,9 +162,7 @@ class AccountDetails extends StatelessWidget {
               Text('Target:', style: theme.textTheme.bodyMedium),
               const SizedBox(width: 8),
               Text(
-                NumberFormat.simpleCurrency().format(
-                  account.target ?? 0,
-                ),
+                NumberFormat.simpleCurrency().format(account.target ?? 0),
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: Colors.blueGrey,
                   fontWeight: FontWeight.w600,
@@ -187,9 +180,7 @@ class AccountDetails extends StatelessWidget {
               Text('Max Loss:', style: theme.textTheme.bodyMedium),
               const SizedBox(width: 8),
               Text(
-                NumberFormat.simpleCurrency().format(
-                  account.maxLoss ?? 0,
-                ),
+                NumberFormat.simpleCurrency().format(account.maxLoss ?? 0),
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: Colors.blueGrey,
                   fontWeight: FontWeight.w600,
@@ -205,15 +196,11 @@ class AccountDetails extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onToggleActive,
-                  icon: Icon(
-                    isActive ? Icons.person_remove : Icons.person_add,
-                  ),
+                  icon: Icon(isActive ? Icons.person_remove : Icons.person_add),
                   label: Text(isActive ? 'Deactivate' : 'Activate'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: isActive
-                        ? Colors.orange
-                        : Colors.green,
+                    backgroundColor: isActive ? Colors.orange : Colors.green,
                     foregroundColor: Colors.white,
                   ),
                 ),

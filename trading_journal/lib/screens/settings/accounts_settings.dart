@@ -14,9 +14,9 @@ class AccountManagementScreen extends StatefulWidget {
       _AccountManagementScreenState();
 }
 
-class _AccountManagementScreenState
-    extends State<AccountManagementScreen> {
+class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final AccountService _accountService = AccountService.instance;
+
   Account? _selectedAccount;
   bool _isEditing = false;
 
@@ -86,9 +86,7 @@ class _AccountManagementScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Failed to create account. Select Active User',
-            ),
+            content: Text('Failed to create account. Select Active User'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -99,8 +97,8 @@ class _AccountManagementScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isActive =
-        _accountService.activeAccount?.id == _selectedAccount?.id;
+    final isActive = _accountService.activeAccount?.id == _selectedAccount?.id;
+    int? activeAccountid = _accountService.activeAccount?.id;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Account Management')),
@@ -122,6 +120,7 @@ class _AccountManagementScreenState
                 child: AccountList(
                   accounts: accounts,
                   selectedAccount: _selectedAccount,
+                  activeAccountId: activeAccountid ?? -1,
                   onSelect: _selectAccount,
                   onDelete: _deleteAccount,
                 ),
@@ -132,9 +131,7 @@ class _AccountManagementScreenState
           // Right Panel - Account Details
           Expanded(
             child: _selectedAccount == null
-                ? Center(
-                    child: Text('Select an account to view details'),
-                  )
+                ? Center(child: Text('Select an account to view details'))
                 : _isEditing
                 ? AccountEditForm(
                     account: _selectedAccount!,
@@ -146,20 +143,18 @@ class _AccountManagementScreenState
                         maxLoss: maxLoss,
                       );
                       setState(() {
-                        _selectedAccount = _accountService
-                            .getAccountById(_selectedAccount!.id);
+                        _selectedAccount = _accountService.getAccountById(
+                          _selectedAccount!.id,
+                        );
                         _isEditing = false;
                       });
 
                       //show confirmation
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Changes saved'),
-                        ),
+                        const SnackBar(content: Text('Changes saved')),
                       );
                     },
-                    onCancel: () =>
-                        setState(() => _isEditing = false),
+                    onCancel: () => setState(() => _isEditing = false),
                   )
                 : AccountDetails(
                     account: _selectedAccount!,
