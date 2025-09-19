@@ -74,7 +74,7 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
 
               const SizedBox(height: 16),
               DropdownButtonFormField<AccountType>(
-                initialValue: _selectedAccountType,
+                value: _selectedAccountType,
                 decoration: const InputDecoration(
                   labelText: 'Account Type',
                   border: OutlineInputBorder(),
