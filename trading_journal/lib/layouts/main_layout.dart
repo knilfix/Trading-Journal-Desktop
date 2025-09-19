@@ -51,8 +51,8 @@ class _MainLayoutState extends State<MainLayout> {
       screen: const SettingsScreen(),
     ),
     NavigationItem(
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.developer_mode_sharp,
+      icon: Icons.bug_report_outlined,
+      selectedIcon: Icons.bug_report,
       label: 'Demos',
       screen: const DemoScreen(),
     ),
